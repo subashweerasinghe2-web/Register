@@ -1,0 +1,3286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Register NX — Student Attendance</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<style>
+/* ---------- Splash ---------- */
+#splashScreen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#101722;color:#fff;transition:opacity .35s ease,visibility .35s ease}
+#splashScreen.hide{opacity:0;visibility:hidden;pointer-events:none}
+.splash-inner{text-align:center;padding:30px}.splash-logo{font-size:56px;margin-bottom:12px}.splash-title{font-family:Georgia,serif;font-size:30px;font-weight:700}.splash-sub{opacity:.72;font-size:13px;margin-top:6px}.splash-loader{width:180px;height:4px;background:rgba(255,255,255,.16);border-radius:99px;margin:22px auto 0;overflow:hidden}.splash-loader i{display:block;height:100%;width:45%;background:#89AEDD;border-radius:99px;animation:splashLoad 1.1s ease-in-out infinite}@keyframes splashLoad{0%{transform:translateX(-120%)}100%{transform:translateX(430%)}}
+/* ---------- Tokens ---------- */
+:root{
+  --color-bg:#F1EFE3;
+  --color-surface:#FFFFFF;
+  --color-surface-alt:#FAF8F1;
+  --color-border:#DCD6C2;
+  --color-border-strong:#C7BFA3;
+  --color-ink:#1D3557;
+  --color-text:#282B31;
+  --color-text-muted:#6C6F76;
+  --color-accent:#1D3557;
+  --color-accent-soft:#E4EAF2;
+  --color-brass:#8A6D3B;
+  --color-danger:#B3261E;
+  --color-danger-bg:#FBEAE9;
+  --color-success:#2F6F4E;
+  --color-success-bg:#E9F3EC;
+  --color-warning:#8A5A11;
+  --color-warning-bg:#FBF2DF;
+  --font-display:'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --radius-sm:6px;
+  --radius-md:12px;
+  --shadow-card:0 1px 2px rgba(29,53,87,0.07), 0 1px 0 rgba(29,53,87,0.04);
+  --shadow-modal:0 20px 60px rgba(20,25,35,0.35);
+  --sidebar-w:246px;
+  color-scheme: light;
+}
+:root[data-theme="dark"]{
+  --color-bg:#14171D;
+  --color-surface:#1B1F27;
+  --color-surface-alt:#20242D;
+  --color-border:#2D323C;
+  --color-border-strong:#3A4049;
+  --color-ink:#E7ECF4;
+  --color-text:#E5E8ED;
+  --color-text-muted:#9BA1AC;
+  --color-accent:#89AEDD;
+  --color-accent-soft:#233042;
+  --color-brass:#D0AE72;
+  --color-danger:#FF7A72;
+  --color-danger-bg:rgba(255,122,114,0.14);
+  --color-success:#74D6A0;
+  --color-success-bg:rgba(116,214,160,0.13);
+  --color-warning:#E7BB6E;
+  --color-warning-bg:rgba(231,187,110,0.13);
+  --shadow-card:0 1px 2px rgba(0,0,0,0.35), 0 1px 0 rgba(0,0,0,0.2);
+  color-scheme: dark;
+}
+:root[data-theme="dark"] input::placeholder,:root[data-theme="dark"] textarea::placeholder{color:#7f8794;opacity:1;}
+:root[data-theme="dark"] option{background:#1B1F27;color:#E5E8ED;}
+:root[data-theme="dark"] .student-name{color:var(--color-text);}
+:root[data-theme="dark"] .modal-close{color:var(--color-text-muted);}
+
+*,*::before,*::after{ box-sizing:border-box; }
+html,body{ height:100%; }
+:root{ padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
+html{ scroll-padding-top:env(safe-area-inset-top,0px); }
+body{
+  margin:0;
+  font-family:var(--font-body);
+  background:var(--color-bg);
+  color:var(--color-text);
+  -webkit-font-smoothing:antialiased;
+  line-height:1.5;
+}
+h1,h2,h3{ font-family:var(--font-display); color:var(--color-ink); margin:0 0 4px; font-weight:600; }
+p{ margin:0; }
+button{ font-family:inherit; }
+input,select,textarea{ font-family:inherit; font-size:14px; }
+a{ color:var(--color-accent); }
+::selection{ background:var(--color-accent-soft); }
+:focus-visible{ outline:2px solid var(--color-accent); outline-offset:2px; }
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
+}
+
+/* ---------- Layout ---------- */
+.app-shell{ display:flex; min-height:100vh; }
+.sidebar{
+  width:var(--sidebar-w); flex:0 0 auto; background:var(--color-surface);
+  border-right:1px solid var(--color-border); display:flex; flex-direction:column;
+  padding:20px 16px; position:fixed; top:0; bottom:0; left:0; z-index:40;
+  transform:translateX(0); transition:transform .25s ease;
+  padding-top:calc(20px + env(safe-area-inset-top,0px));
+  padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));
+}
+.brand{ display:flex; align-items:center; gap:10px; padding:4px 8px 20px; border-bottom:1px solid var(--color-border); margin-bottom:16px; }
+.brand-mark{ font-size:24px; line-height:1; }
+.brand-name{ font-family:var(--font-display); font-size:17px; font-weight:600; color:var(--color-ink); margin:0; }
+.brand-sub{ font-size:11.5px; color:var(--color-text-muted); margin:0; letter-spacing:.02em; }
+.nav{ display:flex; flex-direction:column; gap:2px; flex:1; }
+.nav-item{
+  display:flex; align-items:center; gap:10px; text-align:left; background:none; border:none;
+  padding:10px 12px; border-radius:var(--radius-sm); color:var(--color-text); cursor:pointer;
+  font-size:14px; font-weight:500;
+}
+.nav-item:hover{ background:var(--color-surface-alt); }
+.nav-item.active{ background:var(--color-accent-soft); color:var(--color-ink); font-weight:600; }
+.nav-icon{ font-size:15px; width:18px; text-align:center; }
+.sidebar-foot{ border-top:1px solid var(--color-border); padding-top:14px; margin-top:10px; }
+.ghost-btn{
+  width:100%; background:none; border:1px solid var(--color-border); border-radius:var(--radius-sm);
+  padding:9px 10px; color:var(--color-text); cursor:pointer; font-size:13px; font-weight:500;
+}
+.ghost-btn:hover{ background:var(--color-surface-alt); }
+
+.sidebar-backdrop{ display:none; }
+
+.main{ margin-left:var(--sidebar-w); flex:1; min-width:0; display:flex; flex-direction:column; }
+.topbar{
+  display:flex; align-items:center; gap:12px; padding:16px 28px; background:var(--color-bg);
+  position:sticky; top:0; z-index:20; border-bottom:1px solid transparent;
+  padding-top:calc(16px + env(safe-area-inset-top,0px));
+}
+.menu-btn{ display:none; background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-sm); width:38px; height:38px; cursor:pointer; font-size:16px; }
+.topbar-title{ font-family:var(--font-display); font-size:20px; font-weight:600; color:var(--color-ink); flex:1; }
+.topbar-date{ font-size:13px; color:var(--color-text-muted); }
+.view-container{ padding:4px 28px 48px; flex:1; }
+.view{ display:none; animation:fadeIn .18s ease; }
+.view.active{ display:block; }
+@keyframes fadeIn{ from{ opacity:0; transform:translateY(4px);} to{ opacity:1; transform:none; } }
+
+.view-header{ display:flex; justify-content:space-between; align-items:flex-end; gap:16px; margin-bottom:20px; flex-wrap:wrap; }
+.view-header p{ color:var(--color-text-muted); font-size:14px; margin-top:2px; }
+
+/* ---------- Buttons ---------- */
+.btn-primary,.btn-secondary,.btn-danger{
+  border-radius:var(--radius-sm); padding:10px 16px; font-size:13.5px; font-weight:600; cursor:pointer; border:1px solid transparent;
+  white-space:nowrap;
+}
+.btn-primary{ background:var(--color-ink); color:#fff; }
+.btn-primary:hover{ background:var(--color-accent); filter:brightness(1.08); }
+.btn-secondary{ background:var(--color-surface); color:var(--color-text); border-color:var(--color-border-strong); }
+.btn-secondary:hover{ background:var(--color-surface-alt); }
+.btn-danger{ background:var(--color-danger-bg); color:var(--color-danger); border-color:var(--color-danger); }
+.btn-danger:hover{ background:var(--color-danger); color:#fff; }
+.btn-link{ background:none; border:none; color:var(--color-accent); cursor:pointer; font-size:13.5px; font-weight:600; padding:4px 0; }
+.icon-btn{ background:none; border:1px solid var(--color-border); border-radius:var(--radius-sm); width:32px; height:32px; cursor:pointer; font-size:14px; }
+.icon-btn:hover{ background:var(--color-surface-alt); }
+.icon-btn.danger:hover{ background:var(--color-danger-bg); border-color:var(--color-danger); }
+
+/* ---------- Toolbar / inputs ---------- */
+.toolbar{ display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+.field-input,select.field-input,input.field-input{
+  background:var(--color-surface); border:1px solid var(--color-border-strong); border-radius:var(--radius-sm);
+  padding:9px 12px; color:var(--color-text); min-width:0;
+}
+.toolbar .field-input{ flex:1 1 200px; max-width:280px; }
+
+/* ---------- Stat grid ---------- */
+.stat-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:22px; }
+.stat-tile{ background:var(--color-surface); border:1px solid var(--color-border); border-top:3px solid var(--color-border-strong); border-radius:var(--radius-sm); padding:16px; }
+.stat-tile.accent{ border-top-color:var(--color-ink); }
+.stat-tile.danger{ border-top-color:var(--color-danger); }
+.stat-tile.success{ border-top-color:var(--color-success); }
+.stat-num{ font-family:var(--font-display); font-size:28px; font-weight:600; color:var(--color-ink); }
+.stat-label{ font-size:12.5px; color:var(--color-text-muted); margin-top:2px; }
+
+.dashboard-columns{ display:grid; grid-template-columns:1.3fr 1fr; gap:16px; margin-bottom:16px; }
+@media (max-width:1000px){ .dashboard-columns{ grid-template-columns:1fr; } }
+
+.panel{ background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:18px 20px; margin-bottom:16px; }
+.panel-sub{ color:var(--color-text-muted); font-size:13px; margin-top:2px; margin-bottom:12px; }
+.panel-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+
+/* ---------- Tables ---------- */
+.table-wrap{ overflow-x:auto; border:1px solid var(--color-border); border-radius:var(--radius-md); background:var(--color-surface); }
+table.ledger-table{ width:100%; border-collapse:collapse; font-size:13.5px; min-width:640px; }
+table.ledger-table th{ text-align:left; padding:11px 14px; font-weight:600; color:var(--color-text-muted); font-size:12px; border-bottom:1px solid var(--color-border-strong); white-space:nowrap; }
+table.ledger-table td{ padding:11px 14px; border-bottom:1px solid var(--color-border); vertical-align:middle; }
+table.ledger-table tbody tr:last-child td{ border-bottom:none; }
+table.ledger-table tbody tr:hover{ background:var(--color-surface-alt); }
+.row-actions{ display:flex; gap:6px; justify-content:flex-end; }
+.id-badge{ font-variant-numeric:tabular-nums; letter-spacing:.02em; color:var(--color-brass); font-weight:600; font-size:12.5px; }
+.student-name{ font-weight:600; color:var(--color-text); cursor:pointer; }
+.student-name:hover{ text-decoration:underline; }
+.student-name.flagged{ color:var(--color-danger); }
+.flag-pill{ display:inline-flex; align-items:center; gap:4px; background:var(--color-danger-bg); color:var(--color-danger); font-size:11px; font-weight:700; padding:2px 7px; border-radius:20px; margin-left:8px; white-space:nowrap; }
+.empty-state{ text-align:center; padding:40px 20px; color:var(--color-text-muted); }
+.empty-state h3{ color:var(--color-text); margin-bottom:6px; }
+
+/* ---------- Cards (classes) ---------- */
+.card-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px; }
+.class-card{ background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:16px; }
+.class-card h3{ font-size:17px; }
+.class-card .meta{ font-size:12.5px; color:var(--color-text-muted); margin:4px 0 12px; }
+.class-card .actions{ display:flex; gap:8px; }
+
+/* ---------- Pills / status ---------- */
+.pill{ display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:700; }
+.pill.present{ background:var(--color-success-bg); color:var(--color-success); }
+.pill.absent{ background:var(--color-danger-bg); color:var(--color-danger); }
+.pill.unmarked{ background:var(--color-surface-alt); color:var(--color-text-muted); border:1px dashed var(--color-border-strong); }
+
+.seg{ display:inline-flex; border:1px solid var(--color-border-strong); border-radius:20px; overflow:hidden; }
+.seg button{ background:var(--color-surface); border:none; padding:6px 14px; font-size:12.5px; font-weight:600; cursor:pointer; color:var(--color-text-muted); }
+.seg button.active.present-active{ background:var(--color-success); color:#fff; }
+.seg button.active.absent-active{ background:var(--color-danger); color:#fff; }
+.reason-input{ margin-top:6px; width:100%; max-width:220px; }
+
+/* ---------- Forms ---------- */
+.form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media (max-width:560px){ .form-grid{ grid-template-columns:1fr; } }
+.form-field{ display:flex; flex-direction:column; gap:5px; }
+.form-field.full{ grid-column:1/-1; }
+.form-field label{ font-size:12.5px; font-weight:600; color:var(--color-text-muted); }
+.form-field input,.form-field select,.form-field textarea{
+  background:var(--color-surface); border:1px solid var(--color-border-strong); border-radius:var(--radius-sm); padding:9px 11px; color:var(--color-text);
+}
+.field-error{ color:var(--color-danger); font-size:11.5px; min-height:14px; }
+.form-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:18px; }
+
+/* ---------- Modal ---------- */
+.modal-overlay{ position:fixed; inset:0; background:rgba(15,18,24,.55); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; }
+.modal-overlay.open{ display:flex; }
+.modal{ background:var(--color-surface); border-radius:var(--radius-md); box-shadow:var(--shadow-modal); width:100%; max-width:560px; max-height:90vh; overflow-y:auto; padding:22px 24px; }
+.modal-head{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; gap:10px; }
+.modal-close{ background:none; border:none; font-size:20px; cursor:pointer; color:var(--color-text-muted); line-height:1; padding:2px 4px; }
+
+/* ---------- Toast ---------- */
+.toast-stack{ position:fixed; bottom:calc(20px + env(safe-area-inset-bottom,0px)); right:20px; display:flex; flex-direction:column; gap:8px; z-index:200; }
+.toast{ background:var(--color-ink); color:#fff; padding:12px 16px; border-radius:var(--radius-sm); font-size:13.5px; box-shadow:var(--shadow-modal); max-width:320px; animation:toastIn .2s ease; }
+.toast.error{ background:var(--color-danger); }
+.toast.success{ background:var(--color-success); }
+@keyframes toastIn{ from{ opacity:0; transform:translateY(8px);} to{ opacity:1; transform:none; } }
+
+/* ---------- Import/export ---------- */
+.danger-zone{ border-color:var(--color-danger); }
+.streak-strip{ display:flex; gap:4px; margin:12px 0 18px; flex-wrap:wrap; }
+.streak-dot{ width:22px; height:22px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:10px; color:#fff; font-weight:700; }
+.streak-dot.present{ background:var(--color-success); }
+.streak-dot.absent{ background:var(--color-danger); }
+.streak-dot.unmarked{ background:var(--color-border-strong); color:var(--color-text-muted); }
+.detail-header{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:6px; }
+.detail-meta{ display:flex; flex-wrap:wrap; gap:16px; margin:10px 0 4px; font-size:13.5px; color:var(--color-text-muted); }
+.detail-meta b{ color:var(--color-text); font-weight:600; }
+.back-btn{ background:none; border:none; color:var(--color-accent); font-weight:600; cursor:pointer; font-size:13.5px; padding:0 0 14px; }
+
+/* ---------- Responsive ---------- */
+@media (max-width:880px){
+  .sidebar{ transform:translateX(-100%); box-shadow:var(--shadow-modal); }
+  .sidebar.open{ transform:translateX(0); }
+  .main{ margin-left:0; }
+  .menu-btn{ display:inline-flex; align-items:center; justify-content:center; }
+  .sidebar-backdrop{ display:none; position:fixed; inset:0; background:rgba(10,12,16,.4); z-index:39; }
+  .sidebar-backdrop.open{ display:block; }
+  .view-container{ padding:4px 16px 40px; }
+  .topbar{ padding:14px 16px calc(14px); padding-top:calc(14px + env(safe-area-inset-top,0px)); }
+}
+
+/* ===== Modern responsive attendance-system UI refresh ===== */
+body{background:var(--color-bg);}
+.sidebar{box-shadow:4px 0 24px rgba(0,0,0,.04)}
+.brand{padding:8px 10px 20px}.brand-mark{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:var(--color-accent-soft);font-size:20px}
+.nav{gap:5px}.nav-item{min-height:42px;border-radius:10px}.nav-item.active{box-shadow:inset 3px 0 0 var(--color-accent)}
+.topbar{backdrop-filter:blur(14px);background:color-mix(in srgb,var(--color-bg) 88%,transparent);border-bottom-color:var(--color-border)}
+.view-container{max-width:1500px;width:100%;margin:0 auto;padding-top:18px}
+.panel,.stat-tile,.class-card,.table-wrap{box-shadow:var(--shadow-card)}
+.panel{border-radius:16px}.stat-tile{border-radius:14px;transition:transform .16s ease,box-shadow .16s ease}.stat-tile:hover{transform:translateY(-2px)}
+.class-card{border-radius:16px;transition:transform .16s ease,box-shadow .16s ease}.class-card:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.08)}
+.btn-primary,.btn-secondary,.btn-danger{border-radius:10px;min-height:40px;transition:all .15s ease}.btn-primary{box-shadow:0 4px 12px rgba(29,53,87,.15)}
+.field-input{min-height:40px;border-radius:10px}.table-wrap{border-radius:14px}.table-wrap table{background:var(--color-surface)}
+.modal-overlay{backdrop-filter:blur(5px)}
+@media(max-width:900px){
+  .sidebar{transform:translateX(-105%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.menu-btn{display:block}.topbar{padding-left:14px;padding-right:14px}.view-container{padding:14px 14px 36px}.topbar-date{display:none}
+  .dashboard-columns{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.form-field.full{grid-column:auto}
+}
+@media(max-width:600px){
+  .view-header{align-items:stretch}.view-header>div:last-child{width:100%}.view-header button{width:100%}.toolbar{display:grid;grid-template-columns:1fr}.toolbar .field-input{max-width:none;width:100%}.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat-tile{padding:13px}.stat-num{font-size:24px}.panel{padding:14px}.card-grid{grid-template-columns:1fr}.row-actions{flex-wrap:wrap}.row-actions button{flex:1}
+}
+@media(max-width:390px){.stat-grid{grid-template-columns:1fr}.brand-name{font-size:15px}}
+:root[data-theme="dark"] .topbar{background:color-mix(in srgb,var(--color-bg) 90%,transparent)}
+:root[data-theme="dark"] .panel,:root[data-theme="dark"] .stat-tile,:root[data-theme="dark"] .class-card,:root[data-theme="dark"] .table-wrap{box-shadow:0 6px 24px rgba(0,0,0,.18)}
+:root[data-theme="dark"] table.ledger-table th{background:var(--color-surface-alt);color:var(--color-text)}
+:root[data-theme="dark"] .field-input{color-scheme:dark}
+/* QR panel */
+#studentQrBox{min-height:300px!important;align-items:center}
+.qr-card{display:flex;flex-direction:column;align-items:center;gap:8px;width:min(100%,360px);padding:20px;border:1px solid var(--color-border);border-radius:18px;background:var(--color-surface);box-shadow:0 10px 30px rgba(0,0,0,.08)}
+.qr-card canvas{width:min(280px,80vw)!important;height:auto!important;aspect-ratio:1;background:#fff;border-radius:6px}
+.qr-caption{font-size:12px;color:var(--color-text-muted);text-align:center}
+
+/* ===== Register NX / QR Check-in ===== */
+.nx-live-badge{font-size:12px;font-weight:800;padding:7px 11px;border-radius:999px;background:var(--color-success-bg);color:var(--color-success);border:1px solid color-mix(in srgb,var(--color-success) 25%,transparent)}
+.scanner-layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,.8fr);gap:16px;align-items:start}
+.scanner-camera-panel{min-width:0}
+.scanner-toolbar{display:grid;grid-template-columns:1fr 170px;gap:10px;margin-bottom:12px}
+.camera-shell{position:relative;width:100%;aspect-ratio:16/10;min-height:320px;background:#080b10;border-radius:18px;overflow:hidden;border:1px solid var(--color-border);display:grid;place-items:center}
+.camera-shell video{width:100%;height:100%;object-fit:cover;display:block;background:#080b10}
+.camera-shell video:not([srcObject]){opacity:.05}
+.camera-message{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#fff;background:rgba(0,0,0,.58);backdrop-filter:blur(8px);padding:10px 14px;border-radius:10px;font-size:13px;text-align:center;max-width:80%;pointer-events:none}
+.scan-frame{position:absolute;inset:14%;border:2px solid rgba(255,255,255,.78);border-radius:18px;box-shadow:0 0 0 999px rgba(0,0,0,.18);pointer-events:none;overflow:hidden}
+.scan-frame i{position:absolute;left:0;right:0;top:0;height:3px;background:var(--color-success);box-shadow:0 0 18px var(--color-success);animation:scanLine 1.7s ease-in-out infinite}
+.scan-frame span:before,.scan-frame span:after{content:"";position:absolute;width:24px;height:24px;border-color:#fff;border-style:solid}
+.scan-frame span:before{left:-2px;top:-2px;border-width:4px 0 0 4px}.scan-frame span:after{right:-2px;bottom:-2px;border-width:0 4px 4px 0}
+@keyframes scanLine{0%,100%{transform:translateY(0)}50%{transform:translateY(calc(100% - 3px))}}
+.scanner-actions,.scanner-manual{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.scanner-manual .field-input{flex:1 1 220px}
+.scanner-help{margin-top:12px;padding:11px 13px;border-radius:10px;background:var(--color-accent-soft);font-size:12.5px;color:var(--color-text-muted)}
+.scan-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0 14px}
+.scan-stat{padding:12px;border:1px solid var(--color-border);border-radius:12px;background:var(--color-surface-alt);text-align:center}
+.scan-stat strong{display:block;font-family:var(--font-display);font-size:24px;color:var(--color-ink)}.scan-stat span{font-size:11px;color:var(--color-text-muted)}
+.scan-result{padding:14px;border-radius:13px;border:1px solid var(--color-border);min-height:80px;display:flex;flex-direction:column;justify-content:center}
+.scan-result.success{background:var(--color-success-bg);border-color:color-mix(in srgb,var(--color-success) 30%,var(--color-border));color:var(--color-success)}
+.scan-result.warn{background:var(--color-warning-bg);border-color:color-mix(in srgb,var(--color-warning) 30%,var(--color-border));color:var(--color-warning)}
+.scan-result.error{background:var(--color-danger-bg);border-color:color-mix(in srgb,var(--color-danger) 30%,var(--color-border));color:var(--color-danger)}
+.scan-result .scan-name{font-weight:800;font-size:16px;color:inherit}.scan-result .scan-meta{font-size:12px;opacity:.8;margin-top:2px}
+.scan-log{margin-top:12px;max-height:360px;overflow:auto;display:flex;flex-direction:column;gap:7px}
+.scan-log-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 11px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-surface)}
+.scan-log-row .left{min-width:0}.scan-log-row .name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.scan-log-row .meta{font-size:11px;color:var(--color-text-muted)}
+.scan-log-row .ok{font-size:11px;font-weight:800;color:var(--color-success);white-space:nowrap}
+.scanner-note{margin-top:0}
+@media(max-width:900px){.scanner-layout{grid-template-columns:1fr}.camera-shell{min-height:280px}.scanner-toolbar{grid-template-columns:1fr}}
+@media(max-width:600px){.camera-shell{aspect-ratio:4/3;min-height:240px}.scan-stats{grid-template-columns:1fr 1fr 1fr}.scan-stat{padding:9px 5px}.scan-stat strong{font-size:20px}.scanner-actions button{flex:1}.scanner-manual button{width:100%}}
+
+</style>
+</head>
+<body>
+<div id="splashScreen"><div class="splash-inner"><div class="splash-logo">📋</div><div class="splash-title">Attendance Register</div><div class="splash-sub">Offline • QR Check-in • Automatic Backup</div><div class="splash-loader"><i></i></div></div></div>
+
+<div class="app-shell">
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="brand-mark">📋</span>
+      <div>
+        <p class="brand-name">Register <span style="font-size:10px;vertical-align:middle;letter-spacing:.08em;opacity:.65">NX</span></p>
+        <p class="brand-sub">Next-gen attendance ledger</p>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" data-view="dashboard"><span class="nav-icon">◈</span> Overview</button>
+      <button class="nav-item" data-view="students"><span class="nav-icon">◉</span> Students</button>
+      <button class="nav-item" data-view="classes"><span class="nav-icon">▤</span> Classes</button>
+      <button class="nav-item" data-view="teachers"><span class="nav-icon">♙</span> Teachers</button>
+      <button class="nav-item" data-view="attendance"><span class="nav-icon">✓</span> Mark attendance</button>
+      <button class="nav-item" data-view="scanner"><span class="nav-icon">⌁</span> QR Check-in</button>
+      <button class="nav-item" data-view="data"><span class="nav-icon">⇅</span> Import &amp; export</button>
+    </nav>
+    <div class="sidebar-foot">
+      <button class="ghost-btn" id="themeToggle">🌓 Theme: Auto</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      <div class="topbar-title" id="viewTitle">Overview</div>
+      <div class="topbar-date" id="todayDate"></div>
+    </header>
+
+    <div class="view-container" id="viewContainer">
+
+      <!-- DASHBOARD -->
+      <section class="view active" id="view-dashboard">
+        <div class="view-header">
+          <div><h1>Overview</h1><p>Today's register at a glance.</p></div>
+        </div>
+        <div class="stat-grid" id="statGrid"></div>
+        <div class="dashboard-columns">
+          <div class="panel">
+            <div class="panel-head"><h2>Students to watch</h2></div>
+            <p class="panel-sub">Four or more absences in a row, flagged for follow-up.</p>
+            <div id="watchList"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h2>Find a student</h2></div>
+            <p class="panel-sub">Search by name or Student ID.</p>
+            <input class="field-input" style="width:100%" id="quickFind" placeholder="e.g. STU0001 or Nimal Perera">
+            <div id="quickFindResults"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STUDENTS -->
+      <section class="view" id="view-students">
+        <div class="view-header">
+          <div><h1>Students</h1><p>Enrollment, guardians and contact details.</p></div>
+          <button class="btn-primary" id="addStudentBtn">+ Add student</button>
+        </div>
+        <div class="toolbar">
+          <input class="field-input" id="studentSearch" placeholder="Search by name or Student ID">
+          <select class="field-input" id="studentClassFilter" style="max-width:200px"><option value="">All classes</option></select>
+        </div>
+        <div class="table-wrap">
+          <table class="ledger-table">
+            <thead><tr>
+              <th>Student ID</th><th>Name</th><th>Class</th><th>Age</th><th>Gender</th><th>Guardian</th><th>Phone</th><th></th>
+            </tr></thead>
+            <tbody id="studentsTbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- STUDENT DETAIL -->
+      <section class="view" id="view-detail">
+        <button class="back-btn" id="backToStudents">← Back to students</button>
+        <div class="panel">
+          <div class="detail-header" id="detailHeader"></div>
+          <div class="detail-meta" id="detailMeta"></div>
+        </div>
+        <div class="panel"><div class="panel-head"><h2>Student QR</h2><button class="btn-secondary" id="studentQrBtn">Generate QR</button></div><div id="studentQrBox" style="display:flex;justify-content:center;padding:12px;min-height:40px"></div><p class="panel-sub" style="text-align:center">The QR contains this student's local ID and basic profile reference.</p></div>
+        <div class="stat-grid" id="detailStats"></div>
+        <div class="panel">
+          <h2>Last 14 days</h2>
+          <div class="streak-strip" id="streakStrip"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>Full attendance history</h2></div>
+          <div class="table-wrap">
+            <table class="ledger-table">
+              <thead><tr><th>Date</th><th>Status</th><th>Reason</th></tr></thead>
+              <tbody id="detailHistoryTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- CLASSES -->
+      <section class="view" id="view-classes">
+        <div class="view-header">
+          <div><h1>Classes</h1><p>Group students together for roll call.</p></div>
+          <button class="btn-primary" id="addClassBtn">+ Add class</button>
+        </div>
+        <div class="card-grid" id="classesGrid"></div>
+      </section>
+
+      <!-- TEACHERS -->
+      <section class="view" id="view-teachers">
+        <div class="view-header">
+          <div><h1>Teachers</h1><p>Manage teachers separately and assign them to classes.</p></div>
+          <button class="btn-primary" id="addTeacherBtn">+ Add teacher</button>
+        </div>
+        <div class="card-grid" id="teachersGrid"></div>
+      </section>
+
+      <!-- ATTENDANCE -->
+      <section class="view" id="view-attendance">
+        <div class="view-header">
+          <div><h1>Mark attendance</h1><p>Choose a class and date to take the roll. You can also correct past dates.</p></div>
+        </div>
+        <div class="toolbar">
+          <select class="field-input" id="attClassSelect" style="max-width:220px"></select>
+          <input class="field-input" type="date" id="attDate" style="max-width:170px">
+          <button class="btn-secondary" id="markAllPresentBtn">Mark all present</button>
+          <button class="btn-primary" id="saveAttendanceBtn">Save attendance</button>
+        </div>
+        <div class="table-wrap">
+          <table class="ledger-table">
+            <thead><tr><th>Student ID</th><th>Name</th><th style="width:220px">Status</th><th>Reason (if absent)</th></tr></thead>
+            <tbody id="attendanceTbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+
+      <!-- NEXT-GEN QR CHECK-IN -->
+      <section class="view" id="view-scanner">
+        <div class="view-header">
+          <div>
+            <h1>QR Check-in</h1>
+            <p>Scan a student's QR code and mark attendance instantly — fully local.</p>
+          </div>
+          <div class="nx-live-badge" id="scannerLiveBadge">● Ready</div>
+        </div>
+
+        <div class="scanner-layout">
+          <div class="panel scanner-camera-panel">
+            <div class="scanner-toolbar">
+              <select class="field-input" id="scanClassSelect"></select>
+              <input class="field-input" type="date" id="scanDate">
+            </div>
+            <div class="camera-shell" id="cameraShell">
+              <video id="qrVideo" playsinline muted></video>
+              <div class="scan-frame"><i></i><span></span></div>
+              <div class="camera-message" id="cameraMessage">Camera is stopped</div>
+            </div>
+            <div class="scanner-actions">
+              <button class="btn-primary" id="startScanBtn">Start camera</button>
+              <button class="btn-secondary" id="stopScanBtn" disabled>Stop</button>
+              <button class="btn-secondary" id="scanImageBtn">Scan QR image</button>
+              <input type="file" id="scanImageInput" accept="image/*" capture="environment" style="display:none">
+            </div>
+            <div class="scanner-manual">
+              <input class="field-input" id="manualStudentId" placeholder="Enter Student ID, e.g. STU0001" autocomplete="off">
+              <button class="btn-secondary" id="manualCheckInBtn">Check in</button>
+            </div>
+            <div class="scanner-help">
+              <b>Fast mode:</b> keep the camera open and show each student's QR once. The app prevents duplicate marks for the same student/date.
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div><h2>Live session</h2><p class="panel-sub">Today's QR check-ins</p></div>
+              <button class="btn-link" id="clearScanLogBtn">Clear log</button>
+            </div>
+            <div class="scan-stats">
+              <div class="scan-stat"><strong id="scanCount">0</strong><span>Scanned</span></div>
+              <div class="scan-stat"><strong id="scanPresentCount">0</strong><span>Present today</span></div>
+              <div class="scan-stat"><strong id="scanRemainingCount">0</strong><span>Remaining</span></div>
+            </div>
+            <div id="scanResult" class="scan-result empty">Waiting for a QR code…</div>
+            <div class="scan-log" id="scanLog"></div>
+          </div>
+        </div>
+
+        <div class="panel scanner-note">
+          <h2>How the QR works</h2>
+          <p class="panel-sub">Student QR codes contain a structured local attendance identifier. Scanning inside this app uses that identifier directly; it does not search the web and does not need an internet connection.</p>
+        </div>
+      </section>
+
+      <!-- IMPORT / EXPORT -->
+      <section class="view" id="view-data">
+        <div class="view-header">
+          <div><h1>Import &amp; export</h1><p>Back up the register or bring in past attendance from a spreadsheet.</p></div>
+        </div>
+        <div class="panel">
+          <h2>Local storage</h2>
+          <p class="panel-sub" id="storageStatusText">—</p>
+        </div>
+        <div class="panel">
+          <h2>Export to Excel</h2>
+          <p class="panel-sub">Downloads one workbook with three sheets: Students, Classes and Attendance.</p>
+          <button class="btn-primary" id="exportBtn">Export workbook (.xlsx)</button>
+        </div>
+        <div class="panel">
+          <h2>Import from Excel</h2>
+          <p class="panel-sub">Upload a workbook to add students, classes or past attendance in bulk. Column headers should match the template below — matching is not case-sensitive.</p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+            <button class="btn-secondary" id="downloadTemplateBtn">Download template</button>
+            <button class="btn-primary" id="importBtn">Choose file to import</button>
+            <input type="file" id="importFile" accept=".xlsx,.xls,.csv" style="display:none">
+          </div>
+          <div id="importSummary"></div>
+        </div>
+        <div class="panel">
+          <h2>Automatic .BIN backup</h2>
+          <p class="panel-sub">Every change is also packed into a binary backup automatically. The private browser vault is automatic; a normal computer folder can be connected once for automatic .bin backups.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-secondary" id="backupBinNowBtn">Create .bin backup now</button>
+            <button class="btn-secondary" id="chooseBinFolderBtn">Choose automatic .bin folder</button>
+            <input type="file" id="binImportFile" accept=".bin" style="display:none">
+            <button class="btn-secondary" id="importBinBtn">Restore from .bin</button>
+          </div>
+          <div id="binBackupStatus" style="margin-top:10px;font-size:12.5px;color:var(--color-text-muted)">Automatic backup is enabled.</div>
+        </div>
+        <div class="panel">
+          <h2>Local folder vault</h2>
+          <p class="panel-sub">The app mirrors your register into a private local folder structure when your browser supports the Origin Private File System. Nothing is uploaded to a server.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-secondary" id="syncFoldersBtn">Sync local folders now</button>
+            <button class="btn-secondary" id="chooseBackupFolderBtn">Choose a computer folder for backup</button>
+          </div>
+          <div id="folderVaultStatus" style="margin-top:10px;font-size:12.5px;color:var(--color-text-muted)">Checking local folder support…</div>
+        </div>
+        <div class="panel danger-zone">
+          <h2>Reset all data</h2>
+          <p class="panel-sub">Permanently erase every class, student and attendance record stored in this browser.</p>
+          <button class="btn-danger" id="resetBtn">Reset all data</button>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContainer"></div>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<script>/* Embedded offline QR encoder */(function(){var __qrModules={};__qrModules['QRMode']=function(require,module,exports){module.exports = {
+    MODE_NUMBER :       1 << 0,
+    MODE_ALPHA_NUM :    1 << 1,
+    MODE_8BIT_BYTE :    1 << 2,
+    MODE_KANJI :        1 << 3
+};};__qrModules['QR8bitByte']=function(require,module,exports){var QRMode = require('./QRMode');
+
+function QR8bitByte(data) {
+	this.mode = QRMode.MODE_8BIT_BYTE;
+	this.data = String(data);
+	this.bytes = [];
+	for (var i = 0; i < this.data.length; i++) {
+		var c = this.data.charCodeAt(i);
+		if (c < 0x80) this.bytes.push(c);
+		else if (c < 0x800) this.bytes.push(0xC0 | (c >> 6), 0x80 | (c & 0x3F));
+		else this.bytes.push(0xE0 | (c >> 12), 0x80 | ((c >> 6) & 0x3F), 0x80 | (c & 0x3F));
+	}
+}
+QR8bitByte.prototype = {
+	getLength : function() { return this.bytes.length; },
+	write : function(buffer) { for (var i = 0; i < this.bytes.length; i++) buffer.put(this.bytes[i], 8); }
+};
+module.exports = QR8bitByte;};__qrModules['QRMath']=function(require,module,exports){var QRMath = {
+
+	glog : function(n) {
+	
+		if (n < 1) {
+			throw new Error("glog(" + n + ")");
+		}
+		
+		return QRMath.LOG_TABLE[n];
+	},
+	
+	gexp : function(n) {
+	
+		while (n < 0) {
+			n += 255;
+		}
+	
+		while (n >= 256) {
+			n -= 255;
+		}
+	
+		return QRMath.EXP_TABLE[n];
+	},
+	
+	EXP_TABLE : new Array(256),
+	
+	LOG_TABLE : new Array(256)
+
+};
+	
+for (var i = 0; i < 8; i++) {
+	QRMath.EXP_TABLE[i] = 1 << i;
+}
+for (var i = 8; i < 256; i++) {
+	QRMath.EXP_TABLE[i] = QRMath.EXP_TABLE[i - 4]
+		^ QRMath.EXP_TABLE[i - 5]
+		^ QRMath.EXP_TABLE[i - 6]
+		^ QRMath.EXP_TABLE[i - 8];
+}
+for (var i = 0; i < 255; i++) {
+	QRMath.LOG_TABLE[QRMath.EXP_TABLE[i] ] = i;
+}
+
+module.exports = QRMath;};__qrModules['QRPolynomial']=function(require,module,exports){var QRMath = require('./QRMath');
+
+function QRPolynomial(num, shift) {
+	if (num.length === undefined) {
+		throw new Error(num.length + "/" + shift);
+	}
+
+	var offset = 0;
+
+	while (offset < num.length && num[offset] === 0) {
+		offset++;
+	}
+
+	this.num = new Array(num.length - offset + shift);
+	for (var i = 0; i < num.length - offset; i++) {
+		this.num[i] = num[i + offset];
+	}
+}
+
+QRPolynomial.prototype = {
+
+	get : function(index) {
+		return this.num[index];
+	},
+	
+	getLength : function() {
+		return this.num.length;
+	},
+	
+	multiply : function(e) {
+	
+		var num = new Array(this.getLength() + e.getLength() - 1);
+	
+		for (var i = 0; i < this.getLength(); i++) {
+			for (var j = 0; j < e.getLength(); j++) {
+				num[i + j] ^= QRMath.gexp(QRMath.glog(this.get(i) ) + QRMath.glog(e.get(j) ) );
+			}
+		}
+	
+		return new QRPolynomial(num, 0);
+	},
+	
+	mod : function(e) {
+	
+		if (this.getLength() - e.getLength() < 0) {
+			return this;
+		}
+	
+		var ratio = QRMath.glog(this.get(0) ) - QRMath.glog(e.get(0) );
+	
+		var num = new Array(this.getLength() );
+		
+		for (var i = 0; i < this.getLength(); i++) {
+			num[i] = this.get(i);
+		}
+		
+		for (var x = 0; x < e.getLength(); x++) {
+			num[x] ^= QRMath.gexp(QRMath.glog(e.get(x) ) + ratio);
+		}
+
+		return new QRPolynomial(num, 0).mod(e);
+	}
+};
+
+module.exports = QRPolynomial;};__qrModules['QRErrorCorrectLevel']=function(require,module,exports){module.exports = {
+	L : 1,
+	M : 0,
+	Q : 3,
+	H : 2
+};};__qrModules['QRMaskPattern']=function(require,module,exports){module.exports = {
+	PATTERN000 : 0,
+	PATTERN001 : 1,
+	PATTERN010 : 2,
+	PATTERN011 : 3,
+	PATTERN100 : 4,
+	PATTERN101 : 5,
+	PATTERN110 : 6,
+	PATTERN111 : 7
+};};__qrModules['QRRSBlock']=function(require,module,exports){var QRErrorCorrectLevel = require('./QRErrorCorrectLevel');
+
+function QRRSBlock(totalCount, dataCount) {
+	this.totalCount = totalCount;
+	this.dataCount  = dataCount;
+}
+
+QRRSBlock.RS_BLOCK_TABLE = [
+
+
+
+
+
+	[1, 26, 19],
+	[1, 26, 16],
+	[1, 26, 13],
+	[1, 26, 9],
+
+	[1, 44, 34],
+	[1, 44, 28],
+	[1, 44, 22],
+	[1, 44, 16],
+
+	[1, 70, 55],
+	[1, 70, 44],
+	[2, 35, 17],
+	[2, 35, 13],
+
+	[1, 100, 80],
+	[2, 50, 32],
+	[2, 50, 24],
+	[4, 25, 9],
+
+	[1, 134, 108],
+	[2, 67, 43],
+	[2, 33, 15, 2, 34, 16],
+	[2, 33, 11, 2, 34, 12],
+
+	[2, 86, 68],
+	[4, 43, 27],
+	[4, 43, 19],
+	[4, 43, 15],
+
+	[2, 98, 78],
+	[4, 49, 31],
+	[2, 32, 14, 4, 33, 15],
+	[4, 39, 13, 1, 40, 14],
+
+	[2, 121, 97],
+	[2, 60, 38, 2, 61, 39],
+	[4, 40, 18, 2, 41, 19],
+	[4, 40, 14, 2, 41, 15],
+
+	[2, 146, 116],
+	[3, 58, 36, 2, 59, 37],
+	[4, 36, 16, 4, 37, 17],
+	[4, 36, 12, 4, 37, 13],
+
+	[2, 86, 68, 2, 87, 69],
+	[4, 69, 43, 1, 70, 44],
+	[6, 43, 19, 2, 44, 20],
+	[6, 43, 15, 2, 44, 16],
+
+	[4, 101, 81],
+	[1, 80, 50, 4, 81, 51],
+	[4, 50, 22, 4, 51, 23],
+	[3, 36, 12, 8, 37, 13],
+
+	[2, 116, 92, 2, 117, 93],
+	[6, 58, 36, 2, 59, 37],
+	[4, 46, 20, 6, 47, 21],
+	[7, 42, 14, 4, 43, 15],
+
+	[4, 133, 107],
+	[8, 59, 37, 1, 60, 38],
+	[8, 44, 20, 4, 45, 21],
+	[12, 33, 11, 4, 34, 12],
+
+	[3, 145, 115, 1, 146, 116],
+	[4, 64, 40, 5, 65, 41],
+	[11, 36, 16, 5, 37, 17],
+	[11, 36, 12, 5, 37, 13],
+
+	[5, 109, 87, 1, 110, 88],
+	[5, 65, 41, 5, 66, 42],
+	[5, 54, 24, 7, 55, 25],
+	[11, 36, 12],
+
+	[5, 122, 98, 1, 123, 99],
+	[7, 73, 45, 3, 74, 46],
+	[15, 43, 19, 2, 44, 20],
+	[3, 45, 15, 13, 46, 16],
+
+	[1, 135, 107, 5, 136, 108],
+	[10, 74, 46, 1, 75, 47],
+	[1, 50, 22, 15, 51, 23],
+	[2, 42, 14, 17, 43, 15],
+
+	[5, 150, 120, 1, 151, 121],
+	[9, 69, 43, 4, 70, 44],
+	[17, 50, 22, 1, 51, 23],
+	[2, 42, 14, 19, 43, 15],
+
+	[3, 141, 113, 4, 142, 114],
+	[3, 70, 44, 11, 71, 45],
+	[17, 47, 21, 4, 48, 22],
+	[9, 39, 13, 16, 40, 14],
+
+	[3, 135, 107, 5, 136, 108],
+	[3, 67, 41, 13, 68, 42],
+	[15, 54, 24, 5, 55, 25],
+	[15, 43, 15, 10, 44, 16],
+
+	[4, 144, 116, 4, 145, 117],
+	[17, 68, 42],
+	[17, 50, 22, 6, 51, 23],
+	[19, 46, 16, 6, 47, 17],
+
+	[2, 139, 111, 7, 140, 112],
+	[17, 74, 46],
+	[7, 54, 24, 16, 55, 25],
+	[34, 37, 13],
+
+	[4, 151, 121, 5, 152, 122],
+	[4, 75, 47, 14, 76, 48],
+	[11, 54, 24, 14, 55, 25],
+	[16, 45, 15, 14, 46, 16],
+
+	[6, 147, 117, 4, 148, 118],
+	[6, 73, 45, 14, 74, 46],
+	[11, 54, 24, 16, 55, 25],
+	[30, 46, 16, 2, 47, 17],
+
+	[8, 132, 106, 4, 133, 107],
+	[8, 75, 47, 13, 76, 48],
+	[7, 54, 24, 22, 55, 25],
+	[22, 45, 15, 13, 46, 16],
+
+	[10, 142, 114, 2, 143, 115],
+	[19, 74, 46, 4, 75, 47],
+	[28, 50, 22, 6, 51, 23],
+	[33, 46, 16, 4, 47, 17],
+
+	[8, 152, 122, 4, 153, 123],
+	[22, 73, 45, 3, 74, 46],
+	[8, 53, 23, 26, 54, 24],
+	[12, 45, 15, 28, 46, 16],
+
+	[3, 147, 117, 10, 148, 118],
+	[3, 73, 45, 23, 74, 46],
+	[4, 54, 24, 31, 55, 25],
+	[11, 45, 15, 31, 46, 16],
+
+	[7, 146, 116, 7, 147, 117],
+	[21, 73, 45, 7, 74, 46],
+	[1, 53, 23, 37, 54, 24],
+	[19, 45, 15, 26, 46, 16],
+
+	[5, 145, 115, 10, 146, 116],
+	[19, 75, 47, 10, 76, 48],
+	[15, 54, 24, 25, 55, 25],
+	[23, 45, 15, 25, 46, 16],
+
+	[13, 145, 115, 3, 146, 116],
+	[2, 74, 46, 29, 75, 47],
+	[42, 54, 24, 1, 55, 25],
+	[23, 45, 15, 28, 46, 16],
+
+	[17, 145, 115],
+	[10, 74, 46, 23, 75, 47],
+	[10, 54, 24, 35, 55, 25],
+	[19, 45, 15, 35, 46, 16],
+
+	[17, 145, 115, 1, 146, 116],
+	[14, 74, 46, 21, 75, 47],
+	[29, 54, 24, 19, 55, 25],
+	[11, 45, 15, 46, 46, 16],
+
+	[13, 145, 115, 6, 146, 116],
+	[14, 74, 46, 23, 75, 47],
+	[44, 54, 24, 7, 55, 25],
+	[59, 46, 16, 1, 47, 17],
+
+	[12, 151, 121, 7, 152, 122],
+	[12, 75, 47, 26, 76, 48],
+	[39, 54, 24, 14, 55, 25],
+	[22, 45, 15, 41, 46, 16],
+
+	[6, 151, 121, 14, 152, 122],
+	[6, 75, 47, 34, 76, 48],
+	[46, 54, 24, 10, 55, 25],
+	[2, 45, 15, 64, 46, 16],
+
+	[17, 152, 122, 4, 153, 123],
+	[29, 74, 46, 14, 75, 47],
+	[49, 54, 24, 10, 55, 25],
+	[24, 45, 15, 46, 46, 16],
+
+	[4, 152, 122, 18, 153, 123],
+	[13, 74, 46, 32, 75, 47],
+	[48, 54, 24, 14, 55, 25],
+	[42, 45, 15, 32, 46, 16],
+
+	[20, 147, 117, 4, 148, 118],
+	[40, 75, 47, 7, 76, 48],
+	[43, 54, 24, 22, 55, 25],
+	[10, 45, 15, 67, 46, 16],
+
+	[19, 148, 118, 6, 149, 119],
+	[18, 75, 47, 31, 76, 48],
+	[34, 54, 24, 34, 55, 25],
+	[20, 45, 15, 61, 46, 16]
+];
+
+QRRSBlock.getRSBlocks = function(typeNumber, errorCorrectLevel) {
+	
+	var rsBlock = QRRSBlock.getRsBlockTable(typeNumber, errorCorrectLevel);
+	
+	if (rsBlock === undefined) {
+		throw new Error("bad rs block @ typeNumber:" + typeNumber + "/errorCorrectLevel:" + errorCorrectLevel);
+	}
+
+	var length = rsBlock.length / 3;
+	
+	var list = [];
+	
+	for (var i = 0; i < length; i++) {
+
+		var count = rsBlock[i * 3 + 0];
+		var totalCount = rsBlock[i * 3 + 1];
+		var dataCount  = rsBlock[i * 3 + 2];
+
+		for (var j = 0; j < count; j++) {
+			list.push(new QRRSBlock(totalCount, dataCount) );	
+		}
+	}
+	
+	return list;
+};
+
+QRRSBlock.getRsBlockTable = function(typeNumber, errorCorrectLevel) {
+
+	switch(errorCorrectLevel) {
+	case QRErrorCorrectLevel.L :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
+	case QRErrorCorrectLevel.M :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 1];
+	case QRErrorCorrectLevel.Q :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 2];
+	case QRErrorCorrectLevel.H :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 3];
+	default :
+		return undefined;
+	}
+};
+
+module.exports = QRRSBlock;};__qrModules['QRUtil']=function(require,module,exports){var QRMode = require('./QRMode');
+var QRPolynomial = require('./QRPolynomial');
+var QRMath = require('./QRMath');
+var QRMaskPattern = require('./QRMaskPattern');
+
+var QRUtil = {
+
+    PATTERN_POSITION_TABLE : [
+        [],
+        [6, 18],
+        [6, 22],
+        [6, 26],
+        [6, 30],
+        [6, 34],
+        [6, 22, 38],
+        [6, 24, 42],
+        [6, 26, 46],
+        [6, 28, 50],
+        [6, 30, 54],        
+        [6, 32, 58],
+        [6, 34, 62],
+        [6, 26, 46, 66],
+        [6, 26, 48, 70],
+        [6, 26, 50, 74],
+        [6, 30, 54, 78],
+        [6, 30, 56, 82],
+        [6, 30, 58, 86],
+        [6, 34, 62, 90],
+        [6, 28, 50, 72, 94],
+        [6, 26, 50, 74, 98],
+        [6, 30, 54, 78, 102],
+        [6, 28, 54, 80, 106],
+        [6, 32, 58, 84, 110],
+        [6, 30, 58, 86, 114],
+        [6, 34, 62, 90, 118],
+        [6, 26, 50, 74, 98, 122],
+        [6, 30, 54, 78, 102, 126],
+        [6, 26, 52, 78, 104, 130],
+        [6, 30, 56, 82, 108, 134],
+        [6, 34, 60, 86, 112, 138],
+        [6, 30, 58, 86, 114, 142],
+        [6, 34, 62, 90, 118, 146],
+        [6, 30, 54, 78, 102, 126, 150],
+        [6, 24, 50, 76, 102, 128, 154],
+        [6, 28, 54, 80, 106, 132, 158],
+        [6, 32, 58, 84, 110, 136, 162],
+        [6, 26, 54, 82, 110, 138, 166],
+        [6, 30, 58, 86, 114, 142, 170]
+    ],
+
+    G15 : (1 << 10) | (1 << 8) | (1 << 5) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0),
+    G18 : (1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8) | (1 << 5) | (1 << 2) | (1 << 0),
+    G15_MASK : (1 << 14) | (1 << 12) | (1 << 10)    | (1 << 4) | (1 << 1),
+
+    getBCHTypeInfo : function(data) {
+        var d = data << 10;
+        while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) >= 0) {
+            d ^= (QRUtil.G15 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) ) );    
+        }
+        return ( (data << 10) | d) ^ QRUtil.G15_MASK;
+    },
+
+    getBCHTypeNumber : function(data) {
+        var d = data << 12;
+        while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) >= 0) {
+            d ^= (QRUtil.G18 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) ) );    
+        }
+        return (data << 12) | d;
+    },
+
+    getBCHDigit : function(data) {
+
+        var digit = 0;
+
+        while (data !== 0) {
+            digit++;
+            data >>>= 1;
+        }
+
+        return digit;
+    },
+
+    getPatternPosition : function(typeNumber) {
+        return QRUtil.PATTERN_POSITION_TABLE[typeNumber - 1];
+    },
+
+    getMask : function(maskPattern, i, j) {
+        
+        switch (maskPattern) {
+            
+        case QRMaskPattern.PATTERN000 : return (i + j) % 2 === 0;
+        case QRMaskPattern.PATTERN001 : return i % 2 === 0;
+        case QRMaskPattern.PATTERN010 : return j % 3 === 0;
+        case QRMaskPattern.PATTERN011 : return (i + j) % 3 === 0;
+        case QRMaskPattern.PATTERN100 : return (Math.floor(i / 2) + Math.floor(j / 3) ) % 2 === 0;
+        case QRMaskPattern.PATTERN101 : return (i * j) % 2 + (i * j) % 3 === 0;
+        case QRMaskPattern.PATTERN110 : return ( (i * j) % 2 + (i * j) % 3) % 2 === 0;
+        case QRMaskPattern.PATTERN111 : return ( (i * j) % 3 + (i + j) % 2) % 2 === 0;
+
+        default :
+            throw new Error("bad maskPattern:" + maskPattern);
+        }
+    },
+
+    getErrorCorrectPolynomial : function(errorCorrectLength) {
+
+        var a = new QRPolynomial([1], 0);
+
+        for (var i = 0; i < errorCorrectLength; i++) {
+            a = a.multiply(new QRPolynomial([1, QRMath.gexp(i)], 0) );
+        }
+
+        return a;
+    },
+
+    getLengthInBits : function(mode, type) {
+
+        if (1 <= type && type < 10) {
+
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 10;
+            case QRMode.MODE_ALPHA_NUM  : return 9;
+            case QRMode.MODE_8BIT_BYTE  : return 8;
+            case QRMode.MODE_KANJI      : return 8;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else if (type < 27) {
+
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 12;
+            case QRMode.MODE_ALPHA_NUM  : return 11;
+            case QRMode.MODE_8BIT_BYTE  : return 16;
+            case QRMode.MODE_KANJI      : return 10;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else if (type < 41) {
+
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 14;
+            case QRMode.MODE_ALPHA_NUM  : return 13;
+            case QRMode.MODE_8BIT_BYTE  : return 16;
+            case QRMode.MODE_KANJI      : return 12;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else {
+            throw new Error("type:" + type);
+        }
+    },
+
+    getLostPoint : function(qrCode) {
+        
+        var moduleCount = qrCode.getModuleCount();
+        var lostPoint = 0;
+        var row = 0; 
+        var col = 0;
+
+        
+        for (row = 0; row < moduleCount; row++) {
+
+            for (col = 0; col < moduleCount; col++) {
+
+                var sameCount = 0;
+                var dark = qrCode.isDark(row, col);
+
+                for (var r = -1; r <= 1; r++) {
+
+                    if (row + r < 0 || moduleCount <= row + r) {
+                        continue;
+                    }
+
+                    for (var c = -1; c <= 1; c++) {
+
+                        if (col + c < 0 || moduleCount <= col + c) {
+                            continue;
+                        }
+
+                        if (r === 0 && c === 0) {
+                            continue;
+                        }
+
+                        if (dark === qrCode.isDark(row + r, col + c) ) {
+                            sameCount++;
+                        }
+                    }
+                }
+
+                if (sameCount > 5) {
+                    lostPoint += (3 + sameCount - 5);
+                }
+            }
+        }
+
+
+        for (row = 0; row < moduleCount - 1; row++) {
+            for (col = 0; col < moduleCount - 1; col++) {
+                var count = 0;
+                if (qrCode.isDark(row,     col    ) ) count++;
+                if (qrCode.isDark(row + 1, col    ) ) count++;
+                if (qrCode.isDark(row,     col + 1) ) count++;
+                if (qrCode.isDark(row + 1, col + 1) ) count++;
+                if (count === 0 || count === 4) {
+                    lostPoint += 3;
+                }
+            }
+        }
+
+
+        for (row = 0; row < moduleCount; row++) {
+            for (col = 0; col < moduleCount - 6; col++) {
+                if (qrCode.isDark(row, col) && 
+                        !qrCode.isDark(row, col + 1) && 
+                         qrCode.isDark(row, col + 2) && 
+                         qrCode.isDark(row, col + 3) && 
+                         qrCode.isDark(row, col + 4) && 
+                        !qrCode.isDark(row, col + 5) && 
+                         qrCode.isDark(row, col + 6) ) {
+                    lostPoint += 40;
+                }
+            }
+        }
+
+        for (col = 0; col < moduleCount; col++) {
+            for (row = 0; row < moduleCount - 6; row++) {
+                if (qrCode.isDark(row, col) &&
+                        !qrCode.isDark(row + 1, col) &&
+                         qrCode.isDark(row + 2, col) &&
+                         qrCode.isDark(row + 3, col) &&
+                         qrCode.isDark(row + 4, col) &&
+                        !qrCode.isDark(row + 5, col) &&
+                         qrCode.isDark(row + 6, col) ) {
+                    lostPoint += 40;
+                }
+            }
+        }
+
+        
+        var darkCount = 0;
+
+        for (col = 0; col < moduleCount; col++) {
+            for (row = 0; row < moduleCount; row++) {
+                if (qrCode.isDark(row, col) ) {
+                    darkCount++;
+                }
+            }
+        }
+        
+        var ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
+        lostPoint += ratio * 10;
+
+        return lostPoint;       
+    }
+
+};
+
+module.exports = QRUtil;};__qrModules['QRBitBuffer']=function(require,module,exports){function QRBitBuffer() {
+	this.buffer = [];
+	this.length = 0;
+}
+
+QRBitBuffer.prototype = {
+
+	get : function(index) {
+		var bufIndex = Math.floor(index / 8);
+		return ( (this.buffer[bufIndex] >>> (7 - index % 8) ) & 1) == 1;
+	},
+	
+	put : function(num, length) {
+		for (var i = 0; i < length; i++) {
+			this.putBit( ( (num >>> (length - i - 1) ) & 1) == 1);
+		}
+	},
+	
+	getLengthInBits : function() {
+		return this.length;
+	},
+	
+	putBit : function(bit) {
+	
+		var bufIndex = Math.floor(this.length / 8);
+		if (this.buffer.length <= bufIndex) {
+			this.buffer.push(0);
+		}
+	
+		if (bit) {
+			this.buffer[bufIndex] |= (0x80 >>> (this.length % 8) );
+		}
+	
+		this.length++;
+	}
+};
+
+module.exports = QRBitBuffer;};__qrModules['index']=function(require,module,exports){var QR8bitByte = require('./QR8bitByte');
+var QRUtil = require('./QRUtil');
+var QRPolynomial = require('./QRPolynomial');
+var QRRSBlock = require('./QRRSBlock');
+var QRBitBuffer = require('./QRBitBuffer');
+
+function QRCode(typeNumber, errorCorrectLevel) {
+	this.typeNumber = typeNumber;
+	this.errorCorrectLevel = errorCorrectLevel;
+	this.modules = null;
+	this.moduleCount = 0;
+	this.dataCache = null;
+	this.dataList = [];
+}
+
+QRCode.prototype = {
+	
+	addData : function(data) {
+		var newData = new QR8bitByte(data);
+		this.dataList.push(newData);
+		this.dataCache = null;
+	},
+	
+	isDark : function(row, col) {
+		if (row < 0 || this.moduleCount <= row || col < 0 || this.moduleCount <= col) {
+			throw new Error(row + "," + col);
+		}
+		return this.modules[row][col];
+	},
+
+	getModuleCount : function() {
+		return this.moduleCount;
+	},
+	
+	make : function() {
+
+		if (this.typeNumber < 1 ){
+			var typeNumber = 1;
+			for (typeNumber = 1; typeNumber < 40; typeNumber++) {
+				var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, this.errorCorrectLevel);
+
+				var buffer = new QRBitBuffer();
+				var totalDataCount = 0;
+				for (var i = 0; i < rsBlocks.length; i++) {
+					totalDataCount += rsBlocks[i].dataCount;
+				}
+
+				for (var x = 0; x < this.dataList.length; x++) {
+					var data = this.dataList[x];
+					buffer.put(data.mode, 4);
+					buffer.put(data.getLength(), QRUtil.getLengthInBits(data.mode, typeNumber) );
+					data.write(buffer);
+				}
+				if (buffer.getLengthInBits() <= totalDataCount * 8)
+					break;
+			}
+			this.typeNumber = typeNumber;
+		}
+		this.makeImpl(false, this.getBestMaskPattern() );
+	},
+	
+	makeImpl : function(test, maskPattern) {
+		
+		this.moduleCount = this.typeNumber * 4 + 17;
+		this.modules = new Array(this.moduleCount);
+		
+		for (var row = 0; row < this.moduleCount; row++) {
+			
+			this.modules[row] = new Array(this.moduleCount);
+			
+			for (var col = 0; col < this.moduleCount; col++) {
+				this.modules[row][col] = null;//(col + row) % 3;
+			}
+		}
+	
+		this.setupPositionProbePattern(0, 0);
+		this.setupPositionProbePattern(this.moduleCount - 7, 0);
+		this.setupPositionProbePattern(0, this.moduleCount - 7);
+		this.setupPositionAdjustPattern();
+		this.setupTimingPattern();
+		this.setupTypeInfo(test, maskPattern);
+		
+		if (this.typeNumber >= 7) {
+			this.setupTypeNumber(test);
+		}
+	
+		if (this.dataCache === null) {
+			this.dataCache = QRCode.createData(this.typeNumber, this.errorCorrectLevel, this.dataList);
+		}
+	
+		this.mapData(this.dataCache, maskPattern);
+	},
+
+	setupPositionProbePattern : function(row, col)  {
+		
+		for (var r = -1; r <= 7; r++) {
+			
+			if (row + r <= -1 || this.moduleCount <= row + r) continue;
+			
+			for (var c = -1; c <= 7; c++) {
+				
+				if (col + c <= -1 || this.moduleCount <= col + c) continue;
+				
+				if ( (0 <= r && r <= 6 && (c === 0 || c === 6) ) || 
+                     (0 <= c && c <= 6 && (r === 0 || r === 6) ) || 
+                     (2 <= r && r <= 4 && 2 <= c && c <= 4) ) {
+					this.modules[row + r][col + c] = true;
+				} else {
+					this.modules[row + r][col + c] = false;
+				}
+			}		
+		}		
+	},
+	
+	getBestMaskPattern : function() {
+	
+		var minLostPoint = 0;
+		var pattern = 0;
+	
+		for (var i = 0; i < 8; i++) {
+			
+			this.makeImpl(true, i);
+	
+			var lostPoint = QRUtil.getLostPoint(this);
+	
+			if (i === 0 || minLostPoint >  lostPoint) {
+				minLostPoint = lostPoint;
+				pattern = i;
+			}
+		}
+	
+		return pattern;
+	},
+	
+	createMovieClip : function(target_mc, instance_name, depth) {
+	
+		var qr_mc = target_mc.createEmptyMovieClip(instance_name, depth);
+		var cs = 1;
+	
+		this.make();
+
+		for (var row = 0; row < this.modules.length; row++) {
+			
+			var y = row * cs;
+			
+			for (var col = 0; col < this.modules[row].length; col++) {
+	
+				var x = col * cs;
+				var dark = this.modules[row][col];
+			
+				if (dark) {
+					qr_mc.beginFill(0, 100);
+					qr_mc.moveTo(x, y);
+					qr_mc.lineTo(x + cs, y);
+					qr_mc.lineTo(x + cs, y + cs);
+					qr_mc.lineTo(x, y + cs);
+					qr_mc.endFill();
+				}
+			}
+		}
+		
+		return qr_mc;
+	},
+
+	setupTimingPattern : function() {
+		
+		for (var r = 8; r < this.moduleCount - 8; r++) {
+			if (this.modules[r][6] !== null) {
+				continue;
+			}
+			this.modules[r][6] = (r % 2 === 0);
+		}
+	
+		for (var c = 8; c < this.moduleCount - 8; c++) {
+			if (this.modules[6][c] !== null) {
+				continue;
+			}
+			this.modules[6][c] = (c % 2 === 0);
+		}
+	},
+	
+	setupPositionAdjustPattern : function() {
+	
+		var pos = QRUtil.getPatternPosition(this.typeNumber);
+		
+		for (var i = 0; i < pos.length; i++) {
+		
+			for (var j = 0; j < pos.length; j++) {
+			
+				var row = pos[i];
+				var col = pos[j];
+				
+				if (this.modules[row][col] !== null) {
+					continue;
+				}
+				
+				for (var r = -2; r <= 2; r++) {
+				
+					for (var c = -2; c <= 2; c++) {
+					
+						if (Math.abs(r) === 2 || 
+                            Math.abs(c) === 2 ||
+                            (r === 0 && c === 0) ) {
+							this.modules[row + r][col + c] = true;
+						} else {
+							this.modules[row + r][col + c] = false;
+						}
+					}
+				}
+			}
+		}
+	},
+	
+	setupTypeNumber : function(test) {
+	
+		var bits = QRUtil.getBCHTypeNumber(this.typeNumber);
+        var mod;
+	
+		for (var i = 0; i < 18; i++) {
+			mod = (!test && ( (bits >> i) & 1) === 1);
+			this.modules[Math.floor(i / 3)][i % 3 + this.moduleCount - 8 - 3] = mod;
+		}
+	
+		for (var x = 0; x < 18; x++) {
+			mod = (!test && ( (bits >> x) & 1) === 1);
+			this.modules[x % 3 + this.moduleCount - 8 - 3][Math.floor(x / 3)] = mod;
+		}
+	},
+	
+	setupTypeInfo : function(test, maskPattern) {
+	
+		var data = (this.errorCorrectLevel << 3) | maskPattern;
+		var bits = QRUtil.getBCHTypeInfo(data);
+        var mod;
+
+		for (var v = 0; v < 15; v++) {
+	
+			mod = (!test && ( (bits >> v) & 1) === 1);
+	
+			if (v < 6) {
+				this.modules[v][8] = mod;
+			} else if (v < 8) {
+				this.modules[v + 1][8] = mod;
+			} else {
+				this.modules[this.moduleCount - 15 + v][8] = mod;
+			}
+		}
+
+		for (var h = 0; h < 15; h++) {
+	
+			mod = (!test && ( (bits >> h) & 1) === 1);
+			
+			if (h < 8) {
+				this.modules[8][this.moduleCount - h - 1] = mod;
+			} else if (h < 9) {
+				this.modules[8][15 - h - 1 + 1] = mod;
+			} else {
+				this.modules[8][15 - h - 1] = mod;
+			}
+		}
+
+		this.modules[this.moduleCount - 8][8] = (!test);
+	
+	},
+	
+	mapData : function(data, maskPattern) {
+		
+		var inc = -1;
+		var row = this.moduleCount - 1;
+		var bitIndex = 7;
+		var byteIndex = 0;
+		
+		for (var col = this.moduleCount - 1; col > 0; col -= 2) {
+	
+			if (col === 6) col--;
+	
+			while (true) {
+	
+				for (var c = 0; c < 2; c++) {
+					
+					if (this.modules[row][col - c] === null) {
+						
+						var dark = false;
+	
+						if (byteIndex < data.length) {
+							dark = ( ( (data[byteIndex] >>> bitIndex) & 1) === 1);
+						}
+	
+						var mask = QRUtil.getMask(maskPattern, row, col - c);
+	
+						if (mask) {
+							dark = !dark;
+						}
+						
+						this.modules[row][col - c] = dark;
+						bitIndex--;
+	
+						if (bitIndex === -1) {
+							byteIndex++;
+							bitIndex = 7;
+						}
+					}
+				}
+								
+				row += inc;
+	
+				if (row < 0 || this.moduleCount <= row) {
+					row -= inc;
+					inc = -inc;
+					break;
+				}
+			}
+		}
+		
+	}
+
+};
+
+QRCode.PAD0 = 0xEC;
+QRCode.PAD1 = 0x11;
+
+QRCode.createData = function(typeNumber, errorCorrectLevel, dataList) {
+	
+	var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, errorCorrectLevel);
+	
+	var buffer = new QRBitBuffer();
+	
+	for (var i = 0; i < dataList.length; i++) {
+		var data = dataList[i];
+		buffer.put(data.mode, 4);
+		buffer.put(data.getLength(), QRUtil.getLengthInBits(data.mode, typeNumber) );
+		data.write(buffer);
+	}
+
+	var totalDataCount = 0;
+	for (var x = 0; x < rsBlocks.length; x++) {
+		totalDataCount += rsBlocks[x].dataCount;
+	}
+
+	if (buffer.getLengthInBits() > totalDataCount * 8) {
+		throw new Error("code length overflow. (" + 
+            buffer.getLengthInBits() + 
+            ">" +  
+            totalDataCount * 8 + 
+            ")");
+	}
+
+	if (buffer.getLengthInBits() + 4 <= totalDataCount * 8) {
+		buffer.put(0, 4);
+	}
+
+	while (buffer.getLengthInBits() % 8 !== 0) {
+		buffer.putBit(false);
+	}
+
+	while (true) {
+		
+		if (buffer.getLengthInBits() >= totalDataCount * 8) {
+			break;
+		}
+		buffer.put(QRCode.PAD0, 8);
+		
+		if (buffer.getLengthInBits() >= totalDataCount * 8) {
+			break;
+		}
+		buffer.put(QRCode.PAD1, 8);
+	}
+
+	return QRCode.createBytes(buffer, rsBlocks);
+};
+
+QRCode.createBytes = function(buffer, rsBlocks) {
+
+	var offset = 0;
+	
+	var maxDcCount = 0;
+	var maxEcCount = 0;
+	
+	var dcdata = new Array(rsBlocks.length);
+	var ecdata = new Array(rsBlocks.length);
+	
+	for (var r = 0; r < rsBlocks.length; r++) {
+
+		var dcCount = rsBlocks[r].dataCount;
+		var ecCount = rsBlocks[r].totalCount - dcCount;
+
+		maxDcCount = Math.max(maxDcCount, dcCount);
+		maxEcCount = Math.max(maxEcCount, ecCount);
+		
+		dcdata[r] = new Array(dcCount);
+		
+		for (var i = 0; i < dcdata[r].length; i++) {
+			dcdata[r][i] = 0xff & buffer.buffer[i + offset];
+		}
+		offset += dcCount;
+		
+		var rsPoly = QRUtil.getErrorCorrectPolynomial(ecCount);
+		var rawPoly = new QRPolynomial(dcdata[r], rsPoly.getLength() - 1);
+
+		var modPoly = rawPoly.mod(rsPoly);
+		ecdata[r] = new Array(rsPoly.getLength() - 1);
+		for (var x = 0; x < ecdata[r].length; x++) {
+            var modIndex = x + modPoly.getLength() - ecdata[r].length;
+			ecdata[r][x] = (modIndex >= 0)? modPoly.get(modIndex) : 0;
+		}
+
+	}
+	
+	var totalCodeCount = 0;
+	for (var y = 0; y < rsBlocks.length; y++) {
+		totalCodeCount += rsBlocks[y].totalCount;
+	}
+
+	var data = new Array(totalCodeCount);
+	var index = 0;
+
+	for (var z = 0; z < maxDcCount; z++) {
+		for (var s = 0; s < rsBlocks.length; s++) {
+			if (z < dcdata[s].length) {
+				data[index++] = dcdata[s][z];
+			}
+		}
+	}
+
+	for (var xx = 0; xx < maxEcCount; xx++) {
+		for (var t = 0; t < rsBlocks.length; t++) {
+			if (xx < ecdata[t].length) {
+				data[index++] = ecdata[t][xx];
+			}
+		}
+	}
+
+	return data;
+
+};
+
+module.exports = QRCode;};function __qrRequire(name){var map={"./QRMode":"QRMode","./QR8bitByte":"QR8bitByte","./QRMath":"QRMath","./QRPolynomial":"QRPolynomial","./QRErrorCorrectLevel":"QRErrorCorrectLevel","./QRMaskPattern":"QRMaskPattern","./QRRSBlock":"QRRSBlock","./QRUtil":"QRUtil","./QRBitBuffer":"QRBitBuffer"};var k=map[name]||name;var m={exports:{}};if(!__qrModules[k])throw new Error("QR module "+k+" missing");__qrModules[k](__qrRequire,m,m.exports);return m.exports;}window.AttendanceQR={QRCode:__qrRequire("index"),Levels:__qrRequire("QRErrorCorrectLevel")};})();</script>
+<script>
+'use strict';
+
+/* ===================== State ===================== */
+var STORAGE_KEY = 'attendance_register_v1';
+var state = null;
+var currentView = 'dashboard';
+var currentStudentId = null;
+var lastSavedAt = null;
+
+function defaultState(){
+  return { classes: [], students: [], attendance: [], teachers: [], studentSeq: 1, classSeq: 1, teacherSeq: 1 };
+}
+function loadState(){
+  try{
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return defaultState();
+    var parsed = JSON.parse(raw);
+    var d = defaultState();
+    return {
+      classes: Array.isArray(parsed.classes) ? parsed.classes : d.classes,
+      teachers: Array.isArray(parsed.teachers) ? parsed.teachers : d.teachers,
+      students: Array.isArray(parsed.students) ? parsed.students : d.students,
+      attendance: Array.isArray(parsed.attendance) ? parsed.attendance : d.attendance,
+      studentSeq: typeof parsed.studentSeq === 'number' ? parsed.studentSeq : d.studentSeq,
+      classSeq: typeof parsed.classSeq === 'number' ? parsed.classSeq : d.classSeq,
+      teacherSeq: typeof parsed.teacherSeq === 'number' ? parsed.teacherSeq : d.teacherSeq
+    };
+  }catch(e){
+    console.error('Failed to load saved data, starting fresh.', e);
+    return defaultState();
+  }
+}
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    lastSavedAt = new Date();
+    if(currentView === 'data') renderStorageStatus();
+  }catch(e){
+    console.error('Failed to save data', e);
+    toast('Could not save changes to this browser\'s storage. It may be full or disabled.', 'error');
+  }
+}
+function renderStorageStatus(){
+  var el = document.getElementById('storageStatusText');
+  if(!el) return;
+  var bytes = 0;
+  try{ bytes = new Blob([JSON.stringify(state)]).size; }catch(e){ /* ignore */ }
+  var kb = (bytes/1024).toFixed(1);
+  var savedText = lastSavedAt ? ('Last saved at ' + lastSavedAt.toLocaleTimeString() + '.') : 'Nothing saved yet in this session.';
+  el.innerHTML = state.students.length + ' student(s), ' + state.classes.length + ' class(es) and ' + state.attendance.length +
+    ' attendance record(s) are saved automatically in this browser (' + kb + ' KB). ' + savedText +
+    ' This data stays on this device — export to Excel to back it up or move it elsewhere.';
+}
+
+/* ===================== Utilities ===================== */
+function escapeHtml(str){
+  if(str === null || str === undefined) return '';
+  return String(str).replace(/[&<>"']/g, function(c){
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+  });
+}
+function todayStr(){
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function formatDateDisplay(iso){
+  if(!iso) return '';
+  var parts = iso.split('-');
+  if(parts.length !== 3) return iso;
+  var d = new Date(Number(parts[0]), Number(parts[1])-1, Number(parts[2]));
+  if(isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+}
+function genStudentId(){
+  var id = 'STU' + String(state.studentSeq).padStart(4,'0');
+  state.studentSeq += 1;
+  return id;
+}
+function genClassId(){
+  var id = 'CLS' + String(state.classSeq).padStart(3,'0');
+  state.classSeq += 1;
+  return id;
+}
+function findStudent(id){
+  for(var i=0;i<state.students.length;i++){ if(state.students[i].id === id) return state.students[i]; }
+  return null;
+}
+function findClass(id){
+  for(var i=0;i<state.classes.length;i++){ if(state.classes[i].id === id) return state.classes[i]; }
+  return null;
+}
+function className(id){
+  var c = findClass(id);
+  return c ? c.name : 'Unassigned';
+}
+function studentsInClass(classId){
+  return state.students.filter(function(s){ return s.classId === classId; });
+}
+function attendanceForStudent(studentId){
+  return state.attendance.filter(function(a){ return a.studentId === studentId; })
+    .sort(function(a,b){ return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0); });
+}
+function consecutiveAbsences(studentId){
+  var records = attendanceForStudent(studentId).slice().reverse(); // most recent first
+  var streak = 0;
+  for(var i=0;i<records.length;i++){
+    if(records[i].status === 'absent'){ streak++; } else { break; }
+  }
+  return streak;
+}
+function isFlagged(studentId){ return consecutiveAbsences(studentId) >= 4; }
+function attendanceStats(studentId){
+  var records = attendanceForStudent(studentId);
+  var present = records.filter(function(r){ return r.status === 'present'; }).length;
+  var absent = records.filter(function(r){ return r.status === 'absent'; }).length;
+  var total = records.length;
+  var rate = total > 0 ? Math.round((present/total)*100) : 0;
+  return { present: present, absent: absent, total: total, rate: rate };
+}
+function upsertAttendance(studentId, date, status, reason){
+  var id = studentId + '_' + date;
+  var existing = state.attendance.find(function(a){ return a.id === id; });
+  if(existing){
+    existing.status = status;
+    existing.reason = status === 'absent' ? (reason || '') : '';
+    existing.markedAt = new Date().toISOString();
+  }else{
+    state.attendance.push({ id: id, studentId: studentId, date: date, status: status, reason: status === 'absent' ? (reason||'') : '', markedAt: new Date().toISOString() });
+  }
+}
+
+/* ===================== Toasts ===================== */
+function toast(message, type){
+  var stack = document.getElementById('toastStack');
+  var el = document.createElement('div');
+  el.className = 'toast' + (type ? ' ' + type : '');
+  el.textContent = message;
+  stack.appendChild(el);
+  setTimeout(function(){
+    el.style.transition = 'opacity .25s ease';
+    el.style.opacity = '0';
+    setTimeout(function(){ el.remove(); }, 260);
+  }, 3400);
+}
+
+/* ===================== Modal ===================== */
+function openModal(titleHtml, bodyHtml){
+  var overlay = document.getElementById('modalOverlay');
+  var container = document.getElementById('modalContainer');
+  container.innerHTML =
+    '<div class="modal-head"><h2>' + titleHtml + '</h2><button class="modal-close" id="modalCloseBtn" aria-label="Close">&times;</button></div>' +
+    '<div id="modalBody">' + bodyHtml + '</div>';
+  overlay.classList.add('open');
+  document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+  document.addEventListener('keydown', modalEscHandler);
+}
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.getElementById('modalContainer').innerHTML = '';
+  document.removeEventListener('keydown', modalEscHandler);
+}
+function modalEscHandler(e){ if(e.key === 'Escape') closeModal(); }
+document.getElementById('modalOverlay').addEventListener('click', function(e){
+  if(e.target === this) closeModal();
+});
+
+function confirmModal(message, onConfirm, confirmLabel){
+  openModal('Please confirm', '<p style="margin-bottom:18px; color:var(--color-text)">' + escapeHtml(message) + '</p>' +
+    '<div class="form-actions"><button class="btn-secondary" id="confirmCancelBtn">Cancel</button>' +
+    '<button class="btn-danger" id="confirmOkBtn">' + escapeHtml(confirmLabel || 'Confirm') + '</button></div>');
+  document.getElementById('confirmCancelBtn').addEventListener('click', closeModal);
+  document.getElementById('confirmOkBtn').addEventListener('click', function(){
+    closeModal();
+    onConfirm();
+  });
+}
+
+/* ===================== Navigation ===================== */
+function classOptionsHtml(selectedId, includeBlank){
+  var html = includeBlank ? '<option value="">Unassigned</option>' : '';
+  state.classes.forEach(function(c){
+    html += '<option value="' + escapeHtml(c.id) + '"' + (c.id === selectedId ? ' selected' : '') + '>' + escapeHtml(c.name) + '</option>';
+  });
+  return html;
+}
+
+var viewTitles = {
+  dashboard: 'Overview', students: 'Students', detail: 'Student profile', teachers: 'Teachers',
+  classes: 'Classes', attendance: 'Mark attendance', scanner: 'QR Check-in', data: 'Import & export'
+};
+
+function switchView(view, opts){
+  opts = opts || {};
+  currentView = view;
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+  document.getElementById('view-' + view).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(function(n){
+    n.classList.toggle('active', n.getAttribute('data-view') === view);
+  });
+  document.getElementById('viewTitle').textContent = viewTitles[view] || 'Register';
+  closeSidebarMobile();
+  if(view === 'dashboard') renderDashboard();
+  if(view === 'students') renderStudents();
+  if(view === 'classes') renderClasses();
+  if(view === 'teachers') renderTeachers();
+  if(view === 'attendance') renderAttendanceView();
+  if(view === 'scanner') initScannerView();
+  if(view === 'data') renderStorageStatus();
+  if(view === 'detail' && opts.studentId) renderStudentDetail(opts.studentId);
+}
+
+document.querySelectorAll('.nav-item').forEach(function(btn){
+  btn.addEventListener('click', function(){ switchView(btn.getAttribute('data-view')); });
+});
+
+function openSidebarMobile(){
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebarBackdrop').classList.add('open');
+}
+function closeSidebarMobile(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarBackdrop').classList.remove('open');
+}
+document.getElementById('menuBtn').addEventListener('click', openSidebarMobile);
+document.getElementById('sidebarBackdrop').addEventListener('click', closeSidebarMobile);
+
+/* ===================== Theme ===================== */
+function applyThemePref(){
+  var pref = localStorage.getItem('theme_pref') || 'auto';
+  var root = document.documentElement;
+  var actual = pref === 'auto' ? ((window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light') : pref;
+  root.setAttribute('data-theme', actual);
+  root.style.colorScheme = actual;
+  document.getElementById('themeToggle').textContent = '🌓 Theme: ' + (pref === 'auto' ? 'Auto ('+actual+')' : actual.charAt(0).toUpperCase()+actual.slice(1));
+}
+document.getElementById('themeToggle').addEventListener('click', function(){
+  var pref = localStorage.getItem('theme_pref') || 'auto';
+  var next = pref === 'auto' ? 'light' : (pref === 'light' ? 'dark' : 'auto');
+  localStorage.setItem('theme_pref', next);
+  applyThemePref();
+});
+
+/* ===================== Dashboard ===================== */
+function renderDashboard(){
+  var totalStudents = state.students.length;
+  var totalClasses = state.classes.length;
+  var today = todayStr();
+  var todayRecords = state.attendance.filter(function(a){ return a.date === today; });
+  var presentToday = todayRecords.filter(function(a){ return a.status === 'present'; }).length;
+  var absentToday = todayRecords.filter(function(a){ return a.status === 'absent'; }).length;
+  var flagged = state.students.filter(function(s){ return isFlagged(s.id); });
+
+  var grid = document.getElementById('statGrid');
+  grid.innerHTML =
+    statTile(totalStudents, 'Total students', 'accent') +
+    statTile(totalClasses, 'Classes', '') +
+    statTile(presentToday, 'Present today', 'success') +
+    statTile(absentToday, 'Absent today', absentToday > 0 ? 'danger' : '') +
+    statTile(flagged.length, 'Flagged (4+ absences)', flagged.length > 0 ? 'danger' : '');
+
+  var watchList = document.getElementById('watchList');
+  if(flagged.length === 0){
+    watchList.innerHTML = '<div class="empty-state" style="padding:20px 10px;"><p>No one is currently flagged. Nice and steady.</p></div>';
+  }else{
+    watchList.innerHTML = flagged.map(function(s){
+      var streak = consecutiveAbsences(s.id);
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--color-border)">' +
+        '<div><span class="student-name flagged" data-action="open-student" data-id="' + escapeHtml(s.id) + '">' + escapeHtml(s.fullName) + '</span>' +
+        '<div style="font-size:12px;color:var(--color-text-muted)">' + escapeHtml(s.id) + ' · ' + escapeHtml(className(s.classId)) + '</div></div>' +
+        '<span class="flag-pill">⚠ ' + streak + ' in a row</span></div>';
+    }).join('');
+    watchList.querySelectorAll('[data-action="open-student"]').forEach(function(el){
+      el.addEventListener('click', function(){ switchView('detail', { studentId: el.getAttribute('data-id') }); });
+    });
+  }
+  document.getElementById('quickFind').value = '';
+  document.getElementById('quickFindResults').innerHTML = '';
+}
+function statTile(num, label, cls){
+  return '<div class="stat-tile ' + (cls||'') + '"><div class="stat-num">' + num + '</div><div class="stat-label">' + escapeHtml(label) + '</div></div>';
+}
+
+document.getElementById('quickFind').addEventListener('input', function(){
+  var q = this.value.trim().toLowerCase();
+  var box = document.getElementById('quickFindResults');
+  if(!q){ box.innerHTML = ''; return; }
+  var matches = state.students.filter(function(s){
+    return s.fullName.toLowerCase().indexOf(q) !== -1 || s.id.toLowerCase().indexOf(q) !== -1;
+  }).slice(0,6);
+  if(matches.length === 0){ box.innerHTML = '<p style="color:var(--color-text-muted);font-size:13px;margin-top:10px">No students match.</p>'; return; }
+  box.innerHTML = matches.map(function(s){
+    var flagged = isFlagged(s.id);
+    return '<div class="student-name' + (flagged ? ' flagged' : '') + '" data-action="qf-open" data-id="' + escapeHtml(s.id) + '" style="padding:8px 0;border-bottom:1px solid var(--color-border)">' +
+      escapeHtml(s.fullName) + ' <span style="color:var(--color-text-muted);font-weight:400;font-size:12px">(' + escapeHtml(s.id) + ')</span></div>';
+  }).join('');
+  box.querySelectorAll('[data-action="qf-open"]').forEach(function(el){
+    el.addEventListener('click', function(){ switchView('detail', { studentId: el.getAttribute('data-id') }); });
+  });
+});
+
+/* ===================== Students ===================== */
+function populateClassFilter(){
+  var sel = document.getElementById('studentClassFilter');
+  var cur = sel.value;
+  sel.innerHTML = '<option value="">All classes</option>' + classOptionsHtml(null,false);
+  sel.value = cur;
+}
+function renderStudents(){
+  populateClassFilter();
+  drawStudentsTable();
+}
+function drawStudentsTable(){
+  var q = (document.getElementById('studentSearch').value || '').trim().toLowerCase();
+  var classFilter = document.getElementById('studentClassFilter').value;
+  var list = state.students.filter(function(s){
+    var matchesQ = !q || s.fullName.toLowerCase().indexOf(q) !== -1 || s.id.toLowerCase().indexOf(q) !== -1;
+    var matchesC = !classFilter || s.classId === classFilter;
+    return matchesQ && matchesC;
+  });
+  var tbody = document.getElementById('studentsTbody');
+  if(list.length === 0){
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><h3>No students found</h3><p>Try a different search, or add your first student.</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(function(s){
+    var flagged = isFlagged(s.id);
+    var streak = consecutiveAbsences(s.id);
+    return '<tr>' +
+      '<td class="id-badge">' + escapeHtml(s.id) + '</td>' +
+      '<td><span class="student-name' + (flagged?' flagged':'') + '" data-action="open" data-id="' + escapeHtml(s.id) + '">' + escapeHtml(s.fullName) + '</span>' +
+      (flagged ? '<span class="flag-pill">⚠ ' + streak + '</span>' : '') + '</td>' +
+      '<td>' + escapeHtml(className(s.classId)) + '</td>' +
+      '<td>' + escapeHtml(s.age) + '</td>' +
+      '<td>' + escapeHtml(s.gender) + '</td>' +
+      '<td>' + escapeHtml(s.guardianName) + '</td>' +
+      '<td>' + escapeHtml(s.guardianPhone) + '</td>' +
+      '<td><div class="row-actions">' +
+        '<button class="icon-btn" title="Edit" data-action="edit" data-id="' + escapeHtml(s.id) + '">✎</button>' +
+        '<button class="icon-btn danger" title="Delete" data-action="delete" data-id="' + escapeHtml(s.id) + '">🗑</button>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+  tbody.querySelectorAll('[data-action="open"]').forEach(function(el){
+    el.addEventListener('click', function(){ switchView('detail', { studentId: el.getAttribute('data-id') }); });
+  });
+  tbody.querySelectorAll('[data-action="edit"]').forEach(function(el){
+    el.addEventListener('click', function(){ openStudentForm(el.getAttribute('data-id')); });
+  });
+  tbody.querySelectorAll('[data-action="delete"]').forEach(function(el){
+    el.addEventListener('click', function(){
+      var s = findStudent(el.getAttribute('data-id'));
+      if(!s) return;
+      confirmModal('Delete ' + s.fullName + ' (' + s.id + ')? Their attendance history will also be removed. This cannot be undone.', function(){
+        state.students = state.students.filter(function(x){ return x.id !== s.id; });
+        state.attendance = state.attendance.filter(function(a){ return a.studentId !== s.id; });
+        saveState();
+        toast('Student removed.', 'success');
+        renderStudents();
+      }, 'Delete student');
+    });
+  });
+}
+document.getElementById('studentSearch').addEventListener('input', drawStudentsTable);
+document.getElementById('studentClassFilter').addEventListener('change', drawStudentsTable);
+
+function openStudentForm(editId){
+  var editing = editId ? findStudent(editId) : null;
+  if(!editing && state.classes.length === 0){
+    toast('Add a class first, then add students to it.', 'error');
+    openClassForm();
+    return;
+  }
+  var title = editing ? 'Edit student' : 'Add student';
+  var body =
+    '<form id="studentForm">' +
+    '<div class="form-grid">' +
+      formField('fullName','Full name','text', editing ? editing.fullName : '', true, 'full') +
+      formField('age','Age','number', editing ? editing.age : '', true) +
+      formSelectField('gender','Gender', ['Male','Female','Other'], editing ? editing.gender : '', true) +
+      formField('schoolName','School name','text', editing ? editing.schoolName : '', true) +
+      formSelectFieldOptions('classId','Class', classOptionsHtml(editing ? editing.classId : (state.classes[0]?state.classes[0].id:''), false), true) +
+      formField('guardianName',"Guardian's full name",'text', editing ? editing.guardianName : '', true) +
+      formField('guardianPhone','Telephone number','tel', editing ? editing.guardianPhone : '', true) +
+    '</div>' +
+    '<div class="form-actions"><button type="button" class="btn-secondary" id="studentCancelBtn">Cancel</button>' +
+    '<button type="submit" class="btn-primary">' + (editing ? 'Save changes' : 'Add student') + '</button></div>' +
+    '</form>';
+  openModal(title, body);
+  document.getElementById('studentCancelBtn').addEventListener('click', closeModal);
+  document.getElementById('studentForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    if(!validateStudentForm()) return;
+    var f = e.target;
+    var data = {
+      fullName: f.fullName.value.trim(),
+      age: Number(f.age.value),
+      gender: f.gender.value,
+      schoolName: f.schoolName.value.trim(),
+      classId: f.classId.value,
+      guardianName: f.guardianName.value.trim(),
+      guardianPhone: f.guardianPhone.value.trim()
+    };
+    if(editing){
+      Object.assign(editing, data);
+      toast('Student updated.', 'success');
+    }else{
+      data.id = genStudentId();
+      data.admissionDate = todayStr();
+      state.students.push(data);
+      toast('Student added.', 'success');
+    }
+    saveState();
+    closeModal();
+    if(currentView === 'students') renderStudents();
+    if(currentView === 'detail' && editing) renderStudentDetail(editing.id);
+    if(currentView === 'dashboard') renderDashboard();
+  });
+}
+function validateStudentForm(){
+  var f = document.getElementById('studentForm');
+  var ok = true;
+  ['fullName','age','gender','schoolName','classId','guardianName','guardianPhone'].forEach(function(name){
+    var input = f[name];
+    var errEl = document.getElementById('err_' + name);
+    var val = input.value.trim();
+    var msg = '';
+    if(!val) msg = 'Required';
+    else if(name === 'age' && (isNaN(val) || Number(val) < 1 || Number(val) > 100)) msg = 'Enter a valid age';
+    else if(name === 'guardianPhone' && !/^[0-9+\-\s()]{6,20}$/.test(val)) msg = 'Enter a valid phone number';
+    if(errEl) errEl.textContent = msg;
+    if(msg) ok = false;
+  });
+  return ok;
+}
+function formField(name, label, type, value, required, span){
+  return '<div class="form-field' + (span==='full'?' full':'') + '">' +
+    '<label for="f_' + name + '">' + escapeHtml(label) + '</label>' +
+    '<input id="f_' + name + '" name="' + name + '" type="' + type + '" value="' + escapeHtml(value) + '"' + (required?' required':'') + '>' +
+    '<div class="field-error" id="err_' + name + '"></div></div>';
+}
+function formSelectField(name, label, options, value, required){
+  var opts = options.map(function(o){ return '<option value="' + escapeHtml(o) + '"' + (o===value?' selected':'') + '>' + escapeHtml(o) + '</option>'; }).join('');
+  return '<div class="form-field"><label for="f_' + name + '">' + escapeHtml(label) + '</label>' +
+    '<select id="f_' + name + '" name="' + name + '"' + (required?' required':'') + '><option value="">Select…</option>' + opts + '</select>' +
+    '<div class="field-error" id="err_' + name + '"></div></div>';
+}
+function formSelectFieldOptions(name, label, optionsHtml, required){
+  return '<div class="form-field"><label for="f_' + name + '">' + escapeHtml(label) + '</label>' +
+    '<select id="f_' + name + '" name="' + name + '"' + (required?' required':'') + '>' + optionsHtml + '</select>' +
+    '<div class="field-error" id="err_' + name + '"></div></div>';
+}
+document.getElementById('addStudentBtn').addEventListener('click', function(){ openStudentForm(null); });
+
+/* ===================== Student detail ===================== */
+document.getElementById('backToStudents').addEventListener('click', function(){ currentStudentId=null; clearStudentQr(); switchView('students'); });
+
+function renderStudentDetail(studentId){
+  currentStudentId = studentId;
+  clearStudentQr();
+  var s = findStudent(studentId);
+  if(!s){ switchView('students'); return; }
+  currentStudentId = studentId;
+  var flagged = isFlagged(s.id);
+  var streak = consecutiveAbsences(s.id);
+  document.getElementById('detailHeader').innerHTML =
+    '<div><h1 class="' + (flagged?'student-name flagged':'') + '" style="font-size:22px">' + escapeHtml(s.fullName) +
+      (flagged ? '<span class="flag-pill">⚠ ' + streak + ' in a row</span>' : '') + '</h1>' +
+      '<p style="color:var(--color-text-muted);font-size:13px">' + escapeHtml(s.id) + '</p></div>' +
+    '<div class="row-actions"><button class="btn-secondary" id="detailEditBtn">Edit</button>' +
+    '<button class="btn-danger" id="detailDeleteBtn">Delete</button></div>';
+  document.getElementById('detailMeta').innerHTML =
+    metaItem('Class', className(s.classId)) + metaItem('Age', s.age) + metaItem('Gender', s.gender) +
+    metaItem('School', s.schoolName) + metaItem('Guardian', s.guardianName) + metaItem('Phone', s.guardianPhone) +
+    metaItem('Admitted', formatDateDisplay(s.admissionDate));
+
+  var stats = attendanceStats(s.id);
+  document.getElementById('detailStats').innerHTML =
+    statTile(stats.present, 'Present days', 'success') +
+    statTile(stats.absent, 'Absent days', stats.absent>0?'danger':'') +
+    statTile(stats.rate + '%', 'Attendance rate', '') +
+    statTile(streak, 'Current absence streak', streak>=4?'danger':'');
+
+  var strip = document.getElementById('streakStrip');
+  var days = [];
+  for(var i=13;i>=0;i--){
+    var d = new Date(); d.setDate(d.getDate()-i);
+    var iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    var rec = state.attendance.find(function(a){ return a.studentId===s.id && a.date===iso; });
+    var status = rec ? rec.status : 'unmarked';
+    days.push('<div class="streak-dot ' + status + '" title="' + iso + ': ' + status + '">' + d.getDate() + '</div>');
+  }
+  strip.innerHTML = days.join('');
+
+  var history = attendanceForStudent(s.id).slice().reverse();
+  var tbody = document.getElementById('detailHistoryTbody');
+  if(history.length === 0){
+    tbody.innerHTML = '<tr><td colspan="3"><div class="empty-state"><p>No attendance recorded yet.</p></div></td></tr>';
+  }else{
+    tbody.innerHTML = history.map(function(r){
+      return '<tr><td>' + formatDateDisplay(r.date) + '</td>' +
+        '<td><span class="pill ' + r.status + '">' + (r.status==='present'?'Present':'Absent') + '</span></td>' +
+        '<td>' + escapeHtml(r.reason || '—') + '</td></tr>';
+    }).join('');
+  }
+
+  document.getElementById('detailEditBtn').onclick = function(){ openStudentForm(s.id); };
+  document.getElementById('detailDeleteBtn').onclick = function(){
+    confirmModal('Delete ' + s.fullName + ' (' + s.id + ')? Their attendance history will also be removed.', function(){
+      state.students = state.students.filter(function(x){ return x.id !== s.id; });
+      state.attendance = state.attendance.filter(function(a){ return a.studentId !== s.id; });
+      saveState();
+      toast('Student removed.', 'success');
+      switchView('students');
+    }, 'Delete student');
+  };
+}
+function metaItem(label, value){
+  return '<span><b>' + escapeHtml(value===undefined||value===null||value===''?'—':value) + '</b> ' + escapeHtml(label) + '</span>';
+}
+
+/* ===================== Teachers ===================== */
+function genTeacherId(){ var id='TCH'+String(state.teacherSeq).padStart(3,'0'); state.teacherSeq+=1; return id; }
+function findTeacher(id){ for(var i=0;i<state.teachers.length;i++) if(state.teachers[i].id===id) return state.teachers[i]; return null; }
+function teacherName(id){ var t=findTeacher(id); return t?t.name:''; }
+function renderTeachers(){
+  var grid=document.getElementById('teachersGrid');
+  if(!state.teachers.length){ grid.innerHTML='<div class="empty-state" style="grid-column:1/-1"><h3>No teachers yet</h3><p>Add teachers here, then assign them to classes.</p></div>'; return; }
+  grid.innerHTML=state.teachers.map(function(t){
+    var assigned=state.classes.filter(function(c){return c.teacherId===t.id;}).length;
+    return '<div class="class-card"><h3>'+escapeHtml(t.name)+'</h3><div class="meta">'+escapeHtml(t.subject||'')+(t.phone?' · '+escapeHtml(t.phone):'')+' · '+assigned+' class'+(assigned===1?'':'es')+'</div><div class="actions"><button class="btn-secondary" data-tedit="'+escapeHtml(t.id)+'">Edit</button><button class="btn-danger" data-tdelete="'+escapeHtml(t.id)+'">Delete</button></div></div>';
+  }).join('');
+  grid.querySelectorAll('[data-tedit]').forEach(function(b){b.onclick=function(){openTeacherForm(b.getAttribute('data-tedit'));};});
+  grid.querySelectorAll('[data-tdelete]').forEach(function(b){b.onclick=function(){var t=findTeacher(b.getAttribute('data-tdelete')); if(!t)return; if(state.classes.some(function(c){return c.teacherId===t.id;})){toast('Reassign this teacher from classes first.','error');return;} confirmModal('Delete teacher "'+t.name+'"?',function(){state.teachers=state.teachers.filter(function(x){return x.id!==t.id;});saveState();renderTeachers();toast('Teacher removed.','success');},'Delete teacher');};});
+}
+function openTeacherForm(editId){
+  var editing=editId?findTeacher(editId):null;
+  var body='<form id="teacherForm"><div class="form-grid">'+formField('name','Teacher name','text',editing?editing.name:'',true,'full')+formField('subject','Subject / role','text',editing?(editing.subject||''):'',false,'half')+formField('phone','Phone','tel',editing?(editing.phone||''):'',false,'half')+'</div><div class="form-actions"><button type="button" class="btn-secondary" id="teacherCancelBtn">Cancel</button><button class="btn-primary">'+(editing?'Save changes':'Add teacher')+'</button></div></form>';
+  openModal(editing?'Edit teacher':'Add teacher',body); document.getElementById('teacherCancelBtn').onclick=closeModal;
+  document.getElementById('teacherForm').onsubmit=function(e){e.preventDefault();var name=e.target.name.value.trim();if(!name){document.getElementById('err_name').textContent='Required';return;}if(editing){editing.name=name;editing.subject=e.target.subject.value.trim();editing.phone=e.target.phone.value.trim();}else state.teachers.push({id:genTeacherId(),name:name,subject:e.target.subject.value.trim(),phone:e.target.phone.value.trim(),createdAt:todayStr()});saveState();closeModal();renderTeachers();toast(editing?'Teacher updated.':'Teacher added.','success');};
+}
+document.getElementById('addTeacherBtn').onclick=function(){openTeacherForm(null);};
+
+/* ===================== Classes ===================== */
+function renderClasses(){
+  var grid = document.getElementById('classesGrid');
+  if(state.classes.length === 0){
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><h3>No classes yet</h3><p>Add your first class to start taking attendance.</p></div>';
+    return;
+  }
+  grid.innerHTML = state.classes.map(function(c){
+    var count = studentsInClass(c.id).length;
+    return '<div class="class-card">' +
+      '<h3>' + escapeHtml(c.name) + '</h3>' +
+      '<div class="meta">' + count + ' student' + (count===1?'':'s') + ((c.teacherId&&teacherName(c.teacherId)) ? ' · Teacher: ' + escapeHtml(teacherName(c.teacherId)) : (c.teacher ? ' · Teacher: ' + escapeHtml(c.teacher) : '')) + '</div>' +
+      '<div class="actions"><button class="btn-secondary" data-action="edit" data-id="' + escapeHtml(c.id) + '">Edit</button>' +
+      '<button class="btn-danger" data-action="delete" data-id="' + escapeHtml(c.id) + '">Delete</button></div></div>';
+  }).join('');
+  grid.querySelectorAll('[data-action="edit"]').forEach(function(el){
+    el.addEventListener('click', function(){ openClassForm(el.getAttribute('data-id')); });
+  });
+  grid.querySelectorAll('[data-action="delete"]').forEach(function(el){
+    el.addEventListener('click', function(){
+      var c = findClass(el.getAttribute('data-id'));
+      if(!c) return;
+      var count = studentsInClass(c.id).length;
+      if(count > 0){
+        toast('Reassign or delete the ' + count + ' student(s) in this class first.', 'error');
+        return;
+      }
+      confirmModal('Delete class "' + c.name + '"? This cannot be undone.', function(){
+        state.classes = state.classes.filter(function(x){ return x.id !== c.id; });
+        saveState();
+        toast('Class removed.', 'success');
+        renderClasses();
+      }, 'Delete class');
+    });
+  });
+}
+function openClassForm(editId){
+  var editing = editId ? findClass(editId) : null;
+  var title = editing ? 'Edit class' : 'Add class';
+  var body = '<form id="classForm"><div class="form-grid">' +
+    formField('name','Class name','text', editing ? editing.name : '', true, 'full') +
+    '<div class="field full"><label for="teacher">Teacher</label><select class="field-input" id="teacher" name="teacher"><option value="">— Unassigned —</option>'+state.teachers.map(function(t){return '<option value="'+escapeHtml(t.id)+'" '+((editing&&editing.teacherId===t.id)?'selected':'')+'>'+escapeHtml(t.name)+'</option>';}).join('')+'</select><small class="field-error" id="err_teacher"></small></div>' +
+    '</div><div class="form-actions"><button type="button" class="btn-secondary" id="classCancelBtn">Cancel</button>' +
+    '<button type="submit" class="btn-primary">' + (editing?'Save changes':'Add class') + '</button></div></form>';
+  openModal(title, body);
+  document.getElementById('classCancelBtn').addEventListener('click', closeModal);
+  document.getElementById('classForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var name = e.target.name.value.trim();
+    var errEl = document.getElementById('err_name');
+    if(!name){ errEl.textContent = 'Required'; return; }
+    errEl.textContent = '';
+    if(editing){
+      editing.name = name;
+      editing.teacherId = e.target.teacher.value.trim();
+      editing.teacher = teacherName(editing.teacherId);
+      toast('Class updated.', 'success');
+    }else{
+      var tid=e.target.teacher.value.trim();
+      state.classes.push({ id: genClassId(), name: name, teacherId: tid, teacher: teacherName(tid), createdAt: todayStr() });
+      toast('Class added.', 'success');
+    }
+    saveState();
+    closeModal();
+    renderClasses();
+  });
+}
+document.getElementById('addClassBtn').addEventListener('click', function(){ openClassForm(null); });
+
+/* ===================== Attendance ===================== */
+function populateAttClassSelect(){
+  var sel = document.getElementById('attClassSelect');
+  var cur = sel.value;
+  sel.innerHTML = state.classes.length
+    ? classOptionsHtml(null, false)
+    : '<option value="">No classes yet</option>';
+  if(cur) sel.value = cur;
+}
+function renderAttendanceView(){
+  populateAttClassSelect();
+  var dateInput = document.getElementById('attDate');
+  if(!dateInput.value) dateInput.value = todayStr();
+  drawAttendanceTable();
+}
+function drawAttendanceTable(){
+  var classId = document.getElementById('attClassSelect').value;
+  var date = document.getElementById('attDate').value || todayStr();
+  var tbody = document.getElementById('attendanceTbody');
+  if(!classId){
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><h3>No class selected</h3><p>Add a class first from the Classes tab.</p></div></td></tr>';
+    return;
+  }
+  var roster = studentsInClass(classId);
+  if(roster.length === 0){
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><h3>No students in this class</h3><p>Add students and assign them to this class.</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = roster.map(function(s){
+    var existing = state.attendance.find(function(a){ return a.studentId===s.id && a.date===date; });
+    var status = existing ? existing.status : 'present';
+    var reason = existing ? (existing.reason||'') : '';
+    var flagged = isFlagged(s.id);
+    return '<tr data-student="' + escapeHtml(s.id) + '">' +
+      '<td class="id-badge">' + escapeHtml(s.id) + '</td>' +
+      '<td><span class="student-name' + (flagged?' flagged':'') + '">' + escapeHtml(s.fullName) + '</span></td>' +
+      '<td><div class="seg" data-role="seg">' +
+        '<button type="button" class="present-btn ' + (status==='present'?'active present-active':'') + '" data-status="present">Present</button>' +
+        '<button type="button" class="absent-btn ' + (status==='absent'?'active absent-active':'') + '" data-status="absent">Absent</button>' +
+      '</div></td>' +
+      '<td><input class="field-input reason-input" data-role="reason" placeholder="e.g. Sick, family emergency…" value="' + escapeHtml(reason) + '" style="display:' + (status==='absent'?'block':'none') + '"></td>' +
+    '</tr>';
+  }).join('');
+  tbody.querySelectorAll('tr').forEach(function(row){
+    var reasonInput = row.querySelector('[data-role="reason"]');
+    row.querySelectorAll('.seg button').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        row.querySelectorAll('.seg button').forEach(function(b){ b.classList.remove('active','present-active','absent-active'); });
+        var st = btn.getAttribute('data-status');
+        btn.classList.add('active', st==='present' ? 'present-active' : 'absent-active');
+        reasonInput.style.display = st === 'absent' ? 'block' : 'none';
+      });
+    });
+  });
+}
+document.getElementById('attClassSelect').addEventListener('change', drawAttendanceTable);
+document.getElementById('attDate').addEventListener('change', drawAttendanceTable);
+document.getElementById('markAllPresentBtn').addEventListener('click', function(){
+  document.querySelectorAll('#attendanceTbody tr').forEach(function(row){
+    var presentBtn = row.querySelector('.present-btn');
+    if(presentBtn) presentBtn.click();
+  });
+});
+document.getElementById('saveAttendanceBtn').addEventListener('click', function(){
+  var classId = document.getElementById('attClassSelect').value;
+  var date = document.getElementById('attDate').value;
+  if(!classId || !date){ toast('Choose a class and date first.', 'error'); return; }
+  var rows = document.querySelectorAll('#attendanceTbody tr[data-student]');
+  if(rows.length === 0){ toast('Nothing to save.', 'error'); return; }
+  rows.forEach(function(row){
+    var studentId = row.getAttribute('data-student');
+    var activeBtn = row.querySelector('.seg button.active');
+    var status = activeBtn ? activeBtn.getAttribute('data-status') : 'present';
+    var reasonInput = row.querySelector('[data-role="reason"]');
+    upsertAttendance(studentId, date, status, reasonInput ? reasonInput.value.trim() : '');
+  });
+  saveState();
+  toast('Attendance saved for ' + formatDateDisplay(date) + '.', 'success');
+  drawAttendanceTable();
+});
+
+/* ===================== Import / Export ===================== */
+document.getElementById('exportBtn').addEventListener('click', function(){ exportWorkbook(false); });
+document.getElementById('downloadTemplateBtn').addEventListener('click', function(){ exportWorkbook(true); });
+
+function buildWorkbook(templateOnly){
+  var studentsRows, classesRows, attendanceRows, teachersRows;
+  if(templateOnly){
+    studentsRows = [{ 'Student ID':'', 'Full Name':'Jane Example', 'Age':10, 'Gender':'Female', 'School Name':'Greenwood Primary', 'Class':'Grade 5A', 'Guardian Name':'John Example', 'Guardian Phone':'+94 71 234 5678', 'Admission Date':todayStr() }];
+    classesRows = [{ 'Class ID':'', 'Class Name':'Grade 5A', 'Teacher':'Mrs. Silva' }];
+    attendanceRows = [{ 'Student ID':'STU0001', 'Date':todayStr(), 'Status':'Present', 'Reason':'' }];
+  }else{
+    studentsRows = state.students.map(function(s){
+      return { 'Student ID':s.id, 'Full Name':s.fullName, 'Age':s.age, 'Gender':s.gender, 'School Name':s.schoolName, 'Class':className(s.classId), 'Guardian Name':s.guardianName, 'Guardian Phone':s.guardianPhone, 'Admission Date':s.admissionDate||'' };
+    });
+    classesRows = state.classes.map(function(c){
+      return { 'Class ID':c.id, 'Class Name':c.name, 'Teacher':c.teacher||'' };
+    });
+    attendanceRows = state.attendance.map(function(a){
+      return { 'Student ID':a.studentId, 'Date':a.date, 'Status':a.status==='present'?'Present':'Absent', 'Reason':a.reason||'' };
+    });
+    if(studentsRows.length===0) studentsRows=[{ 'Student ID':'', 'Full Name':'', 'Age':'', 'Gender':'', 'School Name':'', 'Class':'', 'Guardian Name':'', 'Guardian Phone':'', 'Admission Date':'' }];
+    if(classesRows.length===0) classesRows=[{ 'Class ID':'', 'Class Name':'', 'Teacher':'' }];
+    if(attendanceRows.length===0) attendanceRows=[{ 'Student ID':'', 'Date':'', 'Status':'', 'Reason':'' }];
+  }
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(teachersRows), 'Teachers');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(studentsRows), 'Students');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(classesRows), 'Classes');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(attendanceRows), 'Attendance');
+  return wb;
+}
+
+function exportWorkbook(templateOnly){
+  try{
+    var wb = buildWorkbook(templateOnly);
+    var out = XLSX.write(wb, { bookType:'xlsx', type:'array' });
+    var blob = new Blob([out], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    var filename = templateOnly ? 'attendance-import-template.xlsx' : 'attendance-register-export.xlsx';
+    offerDownload(filename, blob);
+  }catch(err){
+    console.error(err);
+    toast('Could not build the workbook.', 'error');
+  }
+}
+
+async function offerDownload(filename, blob){
+  // When hosted as a Claude artifact, window.claude exists and the "downloads"
+  // capability is the only way to hand the viewer a file. When this same HTML
+  // file is downloaded and opened directly in a browser, window.claude does
+  // not exist at all, so we fall back to a plain, universal browser download.
+  var hasClaudeRuntime = (typeof claude !== 'undefined' && claude && typeof claude.use === 'function');
+  if(hasClaudeRuntime){
+    try{
+      var downloads = await claude.use('downloads');
+      if(downloads){
+        await downloads.save({ filename: filename, data: blob });
+        toast('Downloaded ' + filename, 'success');
+        return;
+      }
+    }catch(err){
+      var code = err && err.code;
+      if(code === 'declined') return; // user chose not to save; nothing more to do
+      if(code === 'rate_limited'){ toast('Please wait a moment and try again.', 'error'); return; }
+      console.error(err); // fall through and try the standard download as a backup
+    }
+  }
+  try{
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+    toast('Downloaded ' + filename, 'success');
+  }catch(err2){
+    console.error(err2);
+    toast('Could not save the file. Please try again.', 'error');
+  }
+}
+
+function normKey(k){ return String(k||'').trim().toLowerCase().replace(/[^a-z0-9]/g,''); }
+function getField(rowMap, keys){
+  for(var i=0;i<keys.length;i++){ if(rowMap.hasOwnProperty(keys[i])) return rowMap[keys[i]]; }
+  return '';
+}
+function toRowMap(row){
+  var map = {};
+  Object.keys(row).forEach(function(k){ map[normKey(k)] = row[k]; });
+  return map;
+}
+function parseImportDate(value){
+  if(value === null || value === undefined || value === '') return null;
+  if(value instanceof Date && !isNaN(value.getTime())){
+    return value.getFullYear() + '-' + String(value.getMonth()+1).padStart(2,'0') + '-' + String(value.getDate()).padStart(2,'0');
+  }
+  if(typeof value === 'number'){
+    try{
+      var parsed = XLSX.SSF.parse_date_code(value);
+      if(parsed) return parsed.y + '-' + String(parsed.m).padStart(2,'0') + '-' + String(parsed.d).padStart(2,'0');
+    }catch(e){ /* fall through */ }
+  }
+  var str = String(value).trim();
+  var iso = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(iso) return iso[1] + '-' + iso[2].padStart(2,'0') + '-' + iso[3].padStart(2,'0');
+  var slash = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(slash) return slash[3] + '-' + slash[1].padStart(2,'0') + '-' + slash[2].padStart(2,'0');
+  var d = new Date(str);
+  if(!isNaN(d.getTime())) return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  return null;
+}
+function findSheet(wb, wantedNames){
+  for(var i=0;i<wb.SheetNames.length;i++){
+    var n = wb.SheetNames[i];
+    if(wantedNames.indexOf(n.trim().toLowerCase()) !== -1) return wb.Sheets[n];
+  }
+  return null;
+}
+function classIdByName(name){
+  var target = String(name||'').trim().toLowerCase();
+  if(!target) return '';
+  var found = state.classes.find(function(c){ return c.name.trim().toLowerCase() === target; });
+  if(found) return found.id;
+  var newClass = { id: genClassId(), name: String(name).trim(), teacher:'', createdAt: todayStr() };
+  state.classes.push(newClass);
+  return newClass.id;
+}
+
+document.getElementById('importBtn').addEventListener('click', function(){ document.getElementById('importFile').click(); });
+document.getElementById('importFile').addEventListener('change', function(e){
+  var file = e.target.files && e.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      var data = new Uint8Array(ev.target.result);
+      var wb = XLSX.read(data, { type:'array', cellDates:true });
+      runImport(wb);
+    }catch(err){
+      console.error(err);
+      document.getElementById('importSummary').innerHTML = '<p style="color:var(--color-danger);margin-top:10px">Could not read that file. Please upload a valid .xlsx, .xls or .csv file.</p>';
+    }
+    e.target.value = '';
+  };
+  reader.onerror = function(){
+    document.getElementById('importSummary').innerHTML = '<p style="color:var(--color-danger);margin-top:10px">Could not read that file.</p>';
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+function runImport(wb){
+  var addedClasses=0, addedStudents=0, updatedStudents=0, addedAttendance=0, updatedAttendance=0, skipped=0;
+
+  var classesSheet = findSheet(wb, ['classes','class']);
+  if(classesSheet){
+    XLSX.utils.sheet_to_json(classesSheet, { defval:'' }).forEach(function(row){
+      try{
+        var m = toRowMap(row);
+        var name = String(getField(m,['classname','name']) || '').trim();
+        if(!name){ skipped++; return; }
+        var existing = state.classes.find(function(c){ return c.name.trim().toLowerCase()===name.toLowerCase(); });
+        var teacher = String(getField(m,['teacher']) || '').trim();
+        if(existing){ if(teacher) existing.teacher = teacher; }
+        else{ state.classes.push({ id: genClassId(), name: name, teacher: teacher, createdAt: todayStr() }); addedClasses++; }
+      }catch(err){ skipped++; }
+    });
+  }
+
+  var studentsSheet = findSheet(wb, ['students','student']);
+  if(studentsSheet){
+    XLSX.utils.sheet_to_json(studentsSheet, { defval:'' }).forEach(function(row){
+      try{
+        var m = toRowMap(row);
+        var fullName = String(getField(m,['fullname','name']) || '').trim();
+        if(!fullName){ skipped++; return; }
+        var idVal = String(getField(m,['studentid','id']) || '').trim();
+        var className_ = String(getField(m,['class','classname']) || '').trim();
+        var classId = className_ ? classIdByName(className_) : '';
+        var record = {
+          fullName: fullName,
+          age: Number(getField(m,['age'])) || 0,
+          gender: String(getField(m,['gender']) || '').trim() || 'Other',
+          schoolName: String(getField(m,['schoolname','school']) || '').trim(),
+          classId: classId,
+          guardianName: String(getField(m,['guardianname','guardianfullname','guardian']) || '').trim(),
+          guardianPhone: String(getField(m,['guardianphone','telephone','phone','guardiantelephone']) || '').trim(),
+          admissionDate: parseImportDate(getField(m,['admissiondate'])) || todayStr()
+        };
+        var existing = idVal ? findStudent(idVal.toUpperCase()) : null;
+        if(existing){ Object.assign(existing, record); updatedStudents++; }
+        else{
+          record.id = (idVal && !findStudent(idVal.toUpperCase())) ? idVal.toUpperCase() : genStudentId();
+          state.students.push(record);
+          addedStudents++;
+        }
+      }catch(err){ skipped++; }
+    });
+  }
+
+  var attSheet = findSheet(wb, ['attendance','attendence']);
+  if(attSheet){
+    XLSX.utils.sheet_to_json(attSheet, { defval:'' }).forEach(function(row){
+      try{
+        var m = toRowMap(row);
+        var studentId = String(getField(m,['studentid','id']) || '').trim().toUpperCase();
+        if(!studentId || !findStudent(studentId)){ skipped++; return; }
+        var date = parseImportDate(getField(m,['date']));
+        if(!date){ skipped++; return; }
+        var rawStatus = String(getField(m,['status']) || '').trim().toLowerCase();
+        var status = (rawStatus==='present' || rawStatus==='p') ? 'present' : (rawStatus==='absent' || rawStatus==='a') ? 'absent' : null;
+        if(!status){ skipped++; return; }
+        var reason = String(getField(m,['reason']) || '').trim();
+        var id = studentId + '_' + date;
+        var existed = !!state.attendance.find(function(a){ return a.id===id; });
+        upsertAttendance(studentId, date, status, reason);
+        if(existed) updatedAttendance++; else addedAttendance++;
+      }catch(err){ skipped++; }
+    });
+  }
+
+  if(!classesSheet && !studentsSheet && !attSheet){
+    document.getElementById('importSummary').innerHTML = '<p style="color:var(--color-danger);margin-top:10px">No recognizable sheets found. Expected sheet names: Students, Classes, Attendance.</p>';
+    return;
+  }
+
+  saveState();
+  document.getElementById('importSummary').innerHTML =
+    '<div style="margin-top:12px;padding:12px 14px;background:var(--color-success-bg);border-radius:8px;color:var(--color-success);font-size:13.5px">' +
+    'Added ' + addedStudents + ' student(s), ' + addedClasses + ' class(es), ' + addedAttendance + ' attendance record(s). ' +
+    'Updated ' + updatedStudents + ' student(s), ' + updatedAttendance + ' attendance record(s).' +
+    (skipped > 0 ? ' Skipped ' + skipped + ' row(s) that were missing required data.' : '') + '</div>';
+  toast('Import complete.', 'success');
+  renderDashboard(); renderStudents(); renderClasses();
+}
+
+document.getElementById('resetBtn').addEventListener('click', function(){
+  confirmModal('Erase every class, student and attendance record stored in this browser? This cannot be undone.', function(){
+    state = defaultState();
+    saveState();
+    toast('All data has been reset.', 'success');
+    switchView('dashboard');
+  }, 'Reset everything');
+});
+
+/* ===================== Init ===================== */
+function init(){
+  state = loadState();
+  applyThemePref();
+  document.getElementById('todayDate').textContent = new Date().toLocaleDateString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  renderDashboard();
+}
+
+/* ===================== Enhanced local folder vault =====================
+   Uses OPFS when available. A normal webpage cannot silently create folders
+   in an arbitrary Windows folder; OPFS is the browser's private offline disk.
+   An optional user-selected backup folder is supported by File System Access API.
+*/
+var ORIGINAL_LOAD_STATE = loadState;
+var ORIGINAL_SAVE_STATE = saveState;
+var localBackupDirHandle = null;
+
+function safeFileName(name){
+  return String(name || 'Unnamed')
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g,'_')
+    .replace(/\s+/g,' ')
+    .trim()
+    .replace(/[. ]+$/,'')
+    .slice(0,120) || 'Unnamed';
+}
+
+function getClassFolderName(c){
+  return safeFileName(c.name);
+}
+function getStudentFolderName(s){
+  return safeFileName(s.fullName) + ' [' + safeFileName(s.id) + ']';
+}
+
+async function getOPFSRoot(){
+  if(!navigator.storage || !navigator.storage.getDirectory) return null;
+  try { return await navigator.storage.getDirectory(); } catch(e){ return null; }
+}
+
+async function writeJsonFile(dir, name, value){
+  var fh = await dir.getFileHandle(name, {create:true});
+  var writable = await fh.createWritable();
+  await writable.write(JSON.stringify(value, null, 2));
+  await writable.close();
+}
+
+async function ensureDir(parent, name){
+  return await parent.getDirectoryHandle(name, {create:true});
+}
+
+async function rebuildOPFSFolders(){
+  var root = await getOPFSRoot();
+  if(!root) return false;
+  var vault = await ensureDir(root, 'Attendance Register');
+
+  // Keep a compact machine-readable master copy too.
+  await writeJsonFile(vault, 'register-state.json', {
+    version: 2,
+    savedAt: new Date().toISOString(),
+    classes: state.classes,
+    teachers: state.teachers||[],
+    students: state.students,
+    attendance: state.attendance
+  });
+
+  // Rebuild class folders so renamed/deleted classes do not leave stale records.
+  var existing = [];
+  try {
+    for await (const [name] of vault.entries()) {
+      if(name !== 'register-state.json') existing.push(name);
+    }
+  } catch(e){}
+
+  var desired = {};
+  state.classes.forEach(function(c){ desired[getClassFolderName(c)] = true; });
+  for(var i=0;i<existing.length;i++){
+    if(!desired[existing[i]]){
+      try { await vault.removeEntry(existing[i], {recursive:true}); } catch(e){}
+    }
+  }
+
+  for(var ci=0; ci<state.classes.length; ci++){
+    var c = state.classes[ci];
+    var classDir = await ensureDir(vault, getClassFolderName(c));
+    await writeJsonFile(classDir, 'class.json', {
+      id:c.id, name:c.name, teacherId:c.teacherId||'', teacher:c.teacher||'', createdAt:c.createdAt||''
+    });
+
+    var roster = studentsInClass(c.id);
+    for(var si=0; si<roster.length; si++){
+      var s = roster[si];
+      var studentDir = await ensureDir(classDir, getStudentFolderName(s));
+      await writeJsonFile(studentDir, 'student.json', {
+        id:s.id, fullName:s.fullName, age:s.age, gender:s.gender,
+        schoolName:s.schoolName, classId:s.classId,
+        guardianName:s.guardianName, guardianPhone:s.guardianPhone,
+        admissionDate:s.admissionDate||''
+      });
+
+      var records = attendanceForStudent(s.id);
+      for(var ai=0; ai<records.length; ai++){
+        var a = records[ai];
+        await writeJsonFile(studentDir, a.date + '.json', {
+          studentId:s.id,
+          studentName:s.fullName,
+          classId:c.id,
+          className:c.name,
+          date:a.date,
+          status:a.status,
+          reason:a.reason||'',
+          markedAt:a.markedAt||''
+        });
+      }
+    }
+  }
+  return true;
+}
+
+async function writeSelectedFolderBackup(){
+  if(!localBackupDirHandle) return false;
+  try{
+    var root = localBackupDirHandle;
+    var vault = await ensureDir(root, 'Attendance Register');
+    await writeJsonFile(vault, 'register-state.json', {
+      version:2, savedAt:new Date().toISOString(),
+      classes:state.classes, teachers:state.teachers||[], students:state.students, attendance:state.attendance
+    });
+    for(var ci=0;ci<state.classes.length;ci++){
+      var c=state.classes[ci], cd=await ensureDir(vault,getClassFolderName(c));
+      await writeJsonFile(cd,'class.json',c);
+      var roster=studentsInClass(c.id);
+      for(var si=0;si<roster.length;si++){
+        var s=roster[si], sd=await ensureDir(cd,getStudentFolderName(s));
+        await writeJsonFile(sd,'student.json',s);
+        attendanceForStudent(s.id).forEach(function(){});
+        var recs=attendanceForStudent(s.id);
+        for(var ai=0;ai<recs.length;ai++) await writeJsonFile(sd,recs[ai].date+'.json',recs[ai]);
+      }
+    }
+    return true;
+  }catch(e){
+    console.error('Selected-folder backup failed',e);
+    return false;
+  }
+}
+
+function binBytes(){
+  var payload={format:'ATTENDANCE_REGISTER_BIN',version:3,savedAt:new Date().toISOString(),classes:state.classes||[],teachers:state.teachers||[],students:state.students||[],attendance:state.attendance||[]};
+  var text='ATTREG-BIN-3\n'+JSON.stringify(payload);
+  return new TextEncoder().encode(text);
+}
+async function writeBinFile(dir,name){ var fh=await dir.getFileHandle(name,{create:true}); var w=await fh.createWritable(); await w.write(binBytes()); await w.close(); }
+async function autoBinBackup(){
+  var root=await getOPFSRoot(); var ok=false;
+  if(root){try{var v=await ensureDir(root,'Attendance Register'); await writeBinFile(v,'attendance-auto-backup.bin'); ok=true;}catch(e){console.error('OPFS BIN backup',e);}}
+  if(localBackupDirHandle){try{await writeBinFile(localBackupDirHandle,'attendance-auto-backup.bin'); ok=true;}catch(e){console.error('computer BIN backup',e);}}
+  var el=document.getElementById('binBackupStatus'); if(el) el.textContent=ok?'Automatic .bin backup completed locally at '+new Date().toLocaleTimeString()+'.':'Browser kept the data locally; connect a computer folder for a physical .bin file.';
+  return ok;
+}
+function restoreBinObject(obj){
+  if(!obj || obj.format!=='ATTENDANCE_REGISTER_BIN') throw new Error('Invalid attendance backup');
+  state={classes:Array.isArray(obj.classes)?obj.classes:[],teachers:Array.isArray(obj.teachers)?obj.teachers:[],students:Array.isArray(obj.students)?obj.students:[],attendance:Array.isArray(obj.attendance)?obj.attendance:[],studentSeq:1,classSeq:1,teacherSeq:1};
+  state.studentSeq=Math.max(1,state.students.reduce(function(m,s){var n=parseInt(String(s.id||'').replace(/\D/g,''),10);return isNaN(n)?m:n+1;},1));
+  state.classSeq=Math.max(1,state.classes.reduce(function(m,c){var n=parseInt(String(c.id||'').replace(/\D/g,''),10);return isNaN(n)?m:n+1;},1));
+  state.teacherSeq=Math.max(1,state.teachers.reduce(function(m,t){var n=parseInt(String(t.id||'').replace(/\D/g,''),10);return isNaN(n)?m:n+1;},1));
+  saveState(); renderDashboard();
+}
+async function syncAllLocalFolders(){
+  var requestedGeneration=syncGeneration;
+  var ok=false;
+  try{ ok=await rebuildOPFSFolders(); }catch(e){ console.error(e); }
+  if(requestedGeneration!==syncGeneration) syncQueued=true;
+  var selected=false;
+  if(localBackupDirHandle && requestedGeneration===syncGeneration) selected=await writeSelectedFolderBackup();
+  var el=document.getElementById('folderVaultStatus');
+  if(el){
+    if(ok || selected){
+      el.textContent='Local folder vault synced. Each class contains separate student folders, with one attendance JSON file per attendance date.';
+      el.style.color='var(--color-success)';
+    }else{
+      el.textContent='Private local folders are unavailable in this browser/file mode. The register is still saved locally in browser storage.';
+    }
+  }
+  return ok || selected;
+}
+
+// Serialized persistence: localStorage is immediate; disk writes are queued to prevent sync races.
+var syncGeneration=0, syncRunning=false, syncQueued=false, syncTimer=null;
+function queueLocalSync(){ syncQueued=true; if(syncTimer) clearTimeout(syncTimer); syncTimer=setTimeout(runQueuedLocalSync,180); }
+async function runQueuedLocalSync(){
+  if(syncRunning) return; syncRunning=true; syncQueued=false;
+  try{ await syncAllLocalFolders(); await autoBinBackup(); } catch(e){ console.error('Queued local sync failed',e); }
+  finally{ syncRunning=false; if(syncQueued) queueLocalSync(); }
+}
+saveState = function(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); lastSavedAt=new Date(); syncGeneration++;
+    if(currentView==='data') renderStorageStatus(); queueLocalSync();
+  }catch(e){ console.error('Failed to save data',e); toast('Could not save local data. Browser storage may be full or disabled.','error'); }
+};
+
+async function tryRestoreFromOPFS(){
+  var root=await getOPFSRoot();
+  if(!root) return false;
+  try{
+    var vault=await root.getDirectoryHandle('Attendance Register');
+    var fh=await vault.getFileHandle('register-state.json');
+    var file=await fh.getFile();
+    var parsed=JSON.parse(await file.text());
+    if(parsed && Array.isArray(parsed.classes) && Array.isArray(parsed.students) && Array.isArray(parsed.attendance)){
+      state={
+        classes:parsed.classes, teachers:Array.isArray(parsed.teachers)?parsed.teachers:[], students:parsed.students, attendance:parsed.attendance,
+        studentSeq:Math.max(1, (parsed.students||[]).reduce(function(m,s){
+          var n=parseInt(String(s.id||'').replace(/\D/g,''),10); return isNaN(n)?m:n+1;
+        },1)),
+        classSeq:Math.max(1, (parsed.classes||[]).reduce(function(m,c){
+          var n=parseInt(String(c.id||'').replace(/\D/g,''),10); return isNaN(n)?m:n+1;
+        },1)),
+        teacherSeq:Math.max(1, (parsed.teachers||[]).reduce(function(m,t){var n=parseInt(String(t.id||'').replace(/\D/g,''),10);return isNaN(n)?m:n+1;},1))
+      };
+      localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+function styleWorkbookSheets(wb){
+  if(!wb || !wb.Sheets) return;
+  Object.keys(wb.Sheets).forEach(function(name){
+    var ws=wb.Sheets[name];
+    if(!ws['!ref']) return;
+    var range=XLSX.utils.decode_range(ws['!ref']);
+    var headerStyle={
+      fill:{patternType:'solid',fgColor:{rgb:'1D3557'}},
+      font:{bold:true,color:{rgb:'FFFFFF'}},
+      alignment:{horizontal:'center',vertical:'center',wrapText:true},
+      border:{
+        top:{style:'thin',color:{rgb:'C7BFA3'}},bottom:{style:'thin',color:{rgb:'C7BFA3'}},
+        left:{style:'thin',color:{rgb:'C7BFA3'}},right:{style:'thin',color:{rgb:'C7BFA3'}}
+      }
+    };
+    for(var c=range.s.c;c<=range.e.c;c++){
+      var cell=ws[XLSX.utils.encode_cell({r:range.s.r,c:c})];
+      if(cell) cell.s=headerStyle;
+    }
+    for(var r=range.s.r+1;r<=range.e.r;r++){
+      for(var c2=range.s.c;c2<=range.e.c;c2++){
+        var cell2=ws[XLSX.utils.encode_cell({r:r,c:c2})];
+        if(cell2){
+          cell2.s={
+            alignment:{vertical:'top',wrapText:true},
+            border:{
+              bottom:{style:'thin',color:{rgb:'E1E5EA'}},
+              right:{style:'thin',color:{rgb:'E1E5EA'}}
+            }
+          };
+        }
+      }
+    }
+    ws['!autofilter']={ref:ws['!ref']};
+    ws['!freeze']={xSplit:0,ySplit:1};
+    var widths=[];
+    for(var cc=range.s.c;cc<=range.e.c;cc++){
+      var max=10;
+      for(var rr=range.s.r;rr<=Math.min(range.e.r,range.s.r+200);rr++){
+        var cv=ws[XLSX.utils.encode_cell({r:rr,c:cc})];
+        if(cv && cv.v!==undefined) max=Math.max(max,String(cv.v).length+2);
+      }
+      widths.push({wch:Math.min(max,38)});
+    }
+    ws['!cols']=widths;
+  });
+}
+
+// Replace workbook builder with a styled version while retaining import format.
+var ORIGINAL_BUILD_WORKBOOK=buildWorkbook;
+buildWorkbook=function(templateOnly){
+  var wb=ORIGINAL_BUILD_WORKBOOK(templateOnly);
+  styleWorkbookSheets(wb);
+  return wb;
+};
+
+function enhancedInit(){
+  state=ORIGINAL_LOAD_STATE();
+  applyThemePref();
+  document.getElementById('todayDate').textContent=new Date().toLocaleDateString(undefined,{
+    weekday:'long',year:'numeric',month:'long',day:'numeric'
+  });
+  renderDashboard();
+  var localRaw=null;
+  try{ localRaw=localStorage.getItem(STORAGE_KEY); }catch(e){}
+  if(!localRaw){
+    tryRestoreFromOPFS().then(function(restored){
+      if(restored){ renderDashboard(); toast('Local folder backup restored.','success'); }
+      syncAllLocalFolders();
+    });
+  }else{
+    syncAllLocalFolders();
+  }
+  var status=document.getElementById('folderVaultStatus');
+  if(status && !(navigator.storage && navigator.storage.getDirectory)){
+    status.textContent='Browser private-folder storage is not available here. Data is still stored locally in browser storage.';
+  }
+}
+
+document.getElementById('syncFoldersBtn').addEventListener('click',function(){
+  syncAllLocalFolders().then(function(ok){
+    toast(ok?'Local folders synced successfully.':'Local folder sync is not available in this browser.',ok?'success':'error');
+  });
+});
+
+document.getElementById('chooseBackupFolderBtn').addEventListener('click',async function(){
+  if(!window.showDirectoryPicker){
+    toast('This browser does not support choosing a local backup folder.','error');
+    return;
+  }
+  try{
+    localBackupDirHandle=await window.showDirectoryPicker({mode:'readwrite'});
+    var ok=await writeSelectedFolderBackup();
+    toast(ok?'Computer backup folder connected and synced.':'Could not write to that folder.',''+(ok?'success':'error'));
+  }catch(e){
+    if(e && e.name!=='AbortError') toast('Folder access was not granted.','error');
+  }
+});
+
+document.getElementById('folderVaultStatus').textContent =
+  (navigator.storage && navigator.storage.getDirectory)
+    ? 'Private local folder vault is available; syncing…'
+    : 'Private local folder vault is unavailable in this browser/file mode. Browser-local storage remains enabled.';
+
+document.getElementById('backupBinNowBtn').onclick=function(){autoBinBackup().then(function(ok){toast(ok?'Encrypted-style local .bin backup created.':'Local browser backup exists; choose a computer folder for a physical .bin file.',ok?'success':'error');});};
+document.getElementById('chooseBinFolderBtn').onclick=document.getElementById('chooseBackupFolderBtn').onclick;
+document.getElementById('importBinBtn').onclick=function(){document.getElementById('binImportFile').click();};
+document.getElementById('binImportFile').onchange=function(e){var f=e.target.files[0];if(!f)return;f.text().then(function(txt){var obj=JSON.parse(txt.replace(/^ATTREG-BIN-3\n/,''));restoreBinObject(obj);toast('BIN backup restored successfully.','success');}).catch(function(err){console.error(err);toast('Invalid .bin backup file.','error');}).finally(function(){e.target.value='';});};
+// Student QR: fully offline generation using the embedded QR encoder.
+function clearStudentQr(){
+  var box=document.getElementById('studentQrBox');
+  if(box) box.innerHTML='<div class="empty-state"><p>Select “Generate QR” to create this student’s code.</p></div>';
+}
+function makeStudentQrPayload(s){
+  // vCard is a widely supported QR payload, so phone scanners treat it as
+  // structured contact/profile data instead of sending the raw text to search.
+  var cls=className(s.classId)||'';
+  var esc=function(v){return String(v||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,' ');};
+  // Use REAL CRLF line breaks. Literal \\n text is not a valid vCard payload and many phone scanners report \"No usable data found\".
+  var lines = [
+    'BEGIN:VCARD',
+    'VERSION:3.0',
+    'N:'+esc(s.fullName)+';;;;',
+    'FN:'+esc(s.fullName),
+    'ORG:'+esc(cls),
+    'NOTE:Student ID: '+esc(s.id)+' | Class: '+esc(cls),
+    'UID:'+esc(s.id),
+    'X-STUDENT-ID:'+esc(s.id),
+    'X-ATTENDANCE-CLASS:'+esc(cls),
+    'END:VCARD'
+  ];
+  return lines.join('\r\n')+'\r\n';
+}
+document.getElementById('studentQrBtn').onclick=function(){
+  var requestedId=currentStudentId;
+  var s=findStudent(requestedId);
+  var box=document.getElementById('studentQrBox');
+  if(!s){ clearStudentQr(); toast('Student record not found.','error'); return; }
+  box.innerHTML='<div class="empty-state"><p>Generating QR…</p></div>';
+  try{
+    var data=makeStudentQrPayload(s);
+    var qr=new AttendanceQR.QRCode(0, AttendanceQR.Levels.M);
+    qr.addData(data); qr.make();
+    // Student may have changed while generating; never render a stale QR.
+    if(currentStudentId!==requestedId){ return; }
+    var count=qr.getModuleCount(), scale=6, margin=4, size=(count+margin*2)*scale;
+    var canvas=document.createElement('canvas'); canvas.width=size; canvas.height=size;
+    canvas.style.cssText='width:280px;height:280px;image-rendering:pixelated;display:block';
+    var ctx=canvas.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,size,size); ctx.fillStyle='#000';
+    for(var r=0;r<count;r++) for(var c=0;c<count;c++) if(qr.isDark(r,c)) ctx.fillRect((c+margin)*scale,(r+margin)*scale,scale,scale);
+    box.innerHTML='';
+    var wrap=document.createElement('div'); wrap.className='qr-card';
+    var title=document.createElement('div'); title.style.cssText='font-weight:800;font-size:18px;color:var(--color-text)'; title.textContent=s.fullName;
+    var id=document.createElement('div'); id.style.cssText='font:600 13px monospace;color:var(--color-brass)'; id.textContent=s.id+' · '+className(s.classId);
+    var holder=document.createElement('div'); holder.style.cssText='background:#fff;padding:10px;border-radius:10px;display:inline-flex;margin:8px 0'; holder.appendChild(canvas);
+    var caption=document.createElement('div'); caption.className='qr-caption'; caption.textContent='Scan with your phone camera or QR scanner. The QR contains a standard vCard student record and does not require internet.';
+    var actions=document.createElement('div'); actions.style.cssText='display:flex;gap:8px;justify-content:center;flex-wrap:wrap;width:100%';
+    var dl=document.createElement('button'); dl.className='btn-secondary'; dl.textContent='Download QR'; dl.onclick=function(){var a=document.createElement('a');a.download=s.id+'-QR.png';a.href=canvas.toDataURL('image/png');a.click();};
+    var copy=document.createElement('button'); copy.className='btn-secondary'; copy.textContent='Copy Student ID'; copy.onclick=function(){if(navigator.clipboard)navigator.clipboard.writeText(s.id).then(function(){toast('Student ID copied.','success');});};
+    actions.appendChild(dl); actions.appendChild(copy); wrap.appendChild(title); wrap.appendChild(id); wrap.appendChild(holder); wrap.appendChild(caption); wrap.appendChild(actions); box.appendChild(wrap);
+  }catch(err){ console.error('QR generation failed',err); clearStudentQr(); toast('Could not generate the QR code.','error'); }
+};
+window.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') queueLocalSync(); });
+window.addEventListener('pagehide',function(){ try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch(e){} });
+// Responsive sidebar behavior.
+(function(){
+  var menu=document.querySelector('.menu-btn'), side=document.querySelector('.sidebar');
+  if(menu && side){
+    menu.addEventListener('click',function(){side.classList.toggle('open');});
+    document.querySelectorAll('.nav-item').forEach(function(n){n.addEventListener('click',function(){side.classList.remove('open');});});
+  }
+})();
+
+// Start enhanced initialization instead of the original init() call.
+enhancedInit();
+setTimeout(function(){document.getElementById('splashScreen').classList.add('hide');},900);
+
+</script>
+
+<script>
+/* ===================== Register NX / Next-gen QR Check-in ===================== */
+(function(){
+  var scanStream=null, scanTimer=null, scanBusy=false, scannerReady=false;
+  var scanLog=[];
+
+  function q(id){ return document.getElementById(id); }
+  function selectedScanClass(){ return q('scanClassSelect') ? q('scanClassSelect').value : ''; }
+  function selectedScanDate(){ return q('scanDate') ? q('scanDate').value : todayStr(); }
+
+  function makeNextGenQrPayload(s){
+    var cls=className(s.classId)||'';
+    var esc=function(v){return String(v||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,' ');};
+    return [
+      'BEGIN:VCARD',
+      'VERSION:3.0',
+      'N:'+esc(s.fullName)+';;;;',
+      'FN:'+esc(s.fullName),
+      'ORG:'+esc(cls),
+      'NOTE:Attendance Student ID: '+esc(s.id),
+      'UID:'+esc(s.id),
+      'X-STUDENT-ID:'+esc(s.id),
+      'X-ATTENDANCE-CLASS:'+esc(cls),
+      'X-ATTREG-PAYLOAD:ATTREG|STUDENT|'+esc(s.id),
+      'END:VCARD'
+    ].join('\r\n')+'\r\n';
+  }
+  /* The existing QR button calls makeStudentQrPayload dynamically, so replace only
+     the payload builder while keeping the stable embedded QR renderer. */
+  window.makeStudentQrPayload=makeNextGenQrPayload;
+
+  function fillScanClass(){
+    var sel=q('scanClassSelect'); if(!sel) return;
+    var old=sel.value;
+    sel.innerHTML='';
+    (state.classes||[]).forEach(function(c){
+      var o=document.createElement('option'); o.value=c.id; o.textContent=c.name; sel.appendChild(o);
+    });
+    if(old && state.classes.some(function(c){return c.id===old;})) sel.value=old;
+    else if(state.classes.length) sel.value=state.classes[0].id;
+  }
+
+  function updateScanStats(){
+    var cls=selectedScanClass(), date=selectedScanDate();
+    var roster=cls ? studentsInClass(cls) : [];
+    var records=state.attendance.filter(function(a){return a.date===date;});
+    var present=records.filter(function(a){return a.status==='present';});
+    var inClass=roster.filter(function(s){return present.some(function(a){return a.studentId===s.id;});}).length;
+    if(q('scanCount')) q('scanCount').textContent=scanLog.length;
+    if(q('scanPresentCount')) q('scanPresentCount').textContent=inClass;
+    if(q('scanRemainingCount')) q('scanRemainingCount').textContent=Math.max(0,roster.length-inClass);
+  }
+
+  function setCameraMessage(msg){
+    var el=q('cameraMessage'); if(el) el.textContent=msg;
+  }
+
+  function showScanResult(type,title,meta){
+    var el=q('scanResult'); if(!el) return;
+    el.className='scan-result '+(type||'');
+    el.innerHTML='<div class="scan-name">'+escapeHtml(title)+'</div><div class="scan-meta">'+escapeHtml(meta||'')+'</div>';
+  }
+
+  function addScanLog(s){
+    scanLog.unshift({id:s.id,name:s.fullName,time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})});
+    if(scanLog.length>50) scanLog.pop();
+    renderScanLog(); updateScanStats();
+  }
+
+  function renderScanLog(){
+    var el=q('scanLog'); if(!el) return;
+    if(!scanLog.length){el.innerHTML='<div class="empty-state" style="padding:22px 10px">No scans in this session.</div>';return;}
+    el.innerHTML=scanLog.map(function(x){
+      return '<div class="scan-log-row"><div class="left"><div class="name">'+escapeHtml(x.name)+'</div><div class="meta">'+escapeHtml(x.id)+' · '+escapeHtml(x.time)+'</div></div><span class="ok">✓ PRESENT</span></div>';
+    }).join('');
+  }
+
+  function extractStudentId(raw){
+    var s=String(raw||'').trim();
+    var m=s.match(/X-STUDENT-ID\s*:\s*([A-Za-z0-9_-]+)/i);
+    if(m) return m[1].toUpperCase();
+    m=s.match(/UID\s*:\s*([A-Za-z0-9_-]+)/i);
+    if(m) return m[1].toUpperCase();
+    m=s.match(/ATTREG(?:\:\/\/|\|STUDENT\|)([A-Za-z0-9_-]+)/i);
+    if(m) return m[1].toUpperCase();
+    m=s.match(/(?:Student ID|Attendance Student ID)\s*:\s*([A-Za-z0-9_-]+)/i);
+    if(m) return m[1].toUpperCase();
+    var only=s.match(/^(STU[-_A-Z0-9]+)$/i);
+    return only ? only[1].toUpperCase() : null;
+  }
+
+  function markScannedStudent(id,source){
+    id=String(id||'').trim().toUpperCase();
+    if(!id){showScanResult('error','QR not recognized','No student ID was found in this QR code.');return false;}
+    var s=findStudent(id);
+    if(!s){showScanResult('error','Student not found',id+' is not in this register.');return false;}
+    var cls=selectedScanClass(), date=selectedScanDate();
+    if(!cls || !date){showScanResult('error','Select a class and date','Choose the attendance session first.');return false;}
+    if(s.classId!==cls){
+      showScanResult('warn','Wrong class',s.fullName+' belongs to '+className(s.classId)+', not '+className(cls)+'.');
+      return false;
+    }
+    var existing=state.attendance.find(function(a){return a.studentId===id && a.date===date;});
+    if(existing && existing.status==='present'){
+      showScanResult('warn','Already checked in',s.fullName+' was already marked present for '+formatDateDisplay(date)+'.');
+      return false;
+    }
+    upsertAttendance(id,date,'present','QR check-in');
+    saveState();
+    addScanLog(s);
+    showScanResult('success','✓ '+s.fullName,'Present · '+id+' · '+formatDateDisplay(date)+(source?' · '+source:''));
+    renderScanLog();
+    if(typeof renderAttendanceView==='function') renderAttendanceView();
+    return true;
+  }
+
+  async function scanFrame(){
+    if(!scanStream || scanBusy || !window.BarcodeDetector) return;
+    scanBusy=true;
+    try{
+      var detector=new BarcodeDetector({formats:['qr_code']});
+      var codes=await detector.detect(q('qrVideo'));
+      if(codes && codes.length){
+        var raw=codes[0].rawValue||'';
+        var id=extractStudentId(raw);
+        if(id) markScannedStudent(id,'camera');
+        else showScanResult('error','QR detected, but not a student QR','This code does not contain a supported Attendance Register ID.');
+      }
+    }catch(e){
+      /* Detection errors are transient while the video is changing frames. */
+    }finally{
+      scanBusy=false;
+      if(scanStream) scanTimer=setTimeout(scanFrame,260);
+    }
+  }
+
+  async function startCamera(){
+    if(!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      showScanResult('error','Camera unavailable','Camera scanning needs HTTPS/localhost in this browser. You can still use “Scan QR image” or Student ID.');
+      return;
+    }
+    if(!window.BarcodeDetector){
+      showScanResult('error','QR detector unavailable','This browser does not expose the native QR detector. Try current Chrome or Edge, or use image/manual mode.');
+      return;
+    }
+    try{
+      stopCamera();
+      scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});
+      var v=q('qrVideo'); v.srcObject=scanStream; await v.play();
+      scannerReady=true;
+      q('startScanBtn').disabled=true; q('stopScanBtn').disabled=false;
+      q('scannerLiveBadge').textContent='● Camera live';
+      q('scannerLiveBadge').style.color='var(--color-success)';
+      setCameraMessage('Point the camera at a student QR');
+      scanFrame();
+    }catch(e){
+      console.error(e);
+      showScanResult('error','Could not start camera',e.name==='NotAllowedError'?'Camera permission was denied.':(e.message||'Browser camera error.'));
+      stopCamera();
+    }
+  }
+
+  function stopCamera(){
+    if(scanTimer){clearTimeout(scanTimer);scanTimer=null;}
+    if(scanStream){scanStream.getTracks().forEach(function(t){t.stop();});scanStream=null;}
+    scannerReady=false;
+    var v=q('qrVideo'); if(v){try{v.pause();}catch(e){} v.srcObject=null;}
+    if(q('startScanBtn')) q('startScanBtn').disabled=false;
+    if(q('stopScanBtn')) q('stopScanBtn').disabled=true;
+    if(q('scannerLiveBadge')) q('scannerLiveBadge').textContent='● Ready';
+    setCameraMessage('Camera is stopped');
+  }
+
+  async function scanImage(file){
+    if(!file) return;
+    if(!window.BarcodeDetector){
+      showScanResult('error','QR detector unavailable','Try current Chrome/Edge camera mode or enter the Student ID manually.');
+      return;
+    }
+    try{
+      var detector=new BarcodeDetector({formats:['qr_code']});
+      var bmp=await createImageBitmap(file);
+      var codes=await detector.detect(bmp);
+      if(codes && codes.length){
+        var id=extractStudentId(codes[0].rawValue||'');
+        if(id) markScannedStudent(id,'image');
+        else showScanResult('error','Unsupported QR','This QR does not contain a supported student ID.');
+      }else showScanResult('error','No QR found','Choose a clear image containing one student QR code.');
+      if(bmp.close) bmp.close();
+    }catch(e){
+      console.error(e);
+      showScanResult('error','Could not read image','The browser could not decode this QR image.');
+    }
+  }
+
+  window.initScannerView=function(){
+    fillScanClass();
+    if(q('scanDate') && !q('scanDate').value) q('scanDate').value=todayStr();
+    updateScanStats(); renderScanLog();
+    if(!q('scannerWired')){
+      var marker=document.createElement('input'); marker.type='hidden'; marker.id='scannerWired'; document.body.appendChild(marker);
+      q('startScanBtn').onclick=startCamera;
+      q('stopScanBtn').onclick=stopCamera;
+      q('scanImageBtn').onclick=function(){q('scanImageInput').click();};
+      q('scanImageInput').onchange=function(e){scanImage(e.target.files[0]);e.target.value='';};
+      q('manualCheckInBtn').onclick=function(){var id=q('manualStudentId').value.trim();if(markScannedStudent(id,'manual'))q('manualStudentId').value='';};
+      q('manualStudentId').addEventListener('keydown',function(e){if(e.key==='Enter')q('manualCheckInBtn').click();});
+      q('scanClassSelect').onchange=function(){scanLog=[];renderScanLog();updateScanStats();};
+      q('scanDate').onchange=function(){scanLog=[];renderScanLog();updateScanStats();};
+      q('clearScanLogBtn').onclick=function(){scanLog=[];renderScanLog();updateScanStats();};
+    }
+  };
+
+  window.addEventListener('pagehide',stopCamera);
+  document.addEventListener('visibilitychange',function(){if(document.hidden) stopCamera();});
+})();
+</script>
+
+</body>
+</html>
